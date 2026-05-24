@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local environments
+.venv/
+venv/
+env/
+
+# macOS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Generated datasets and run outputs
+data/
+outputs/
+resultados/
+entrega_overcooked_drive/
+entrega_overcooked_lista/
+
+# Large generated media
+*.gif
+*.mp4
+
+# Local/private metadata
+integrantes.txt
+

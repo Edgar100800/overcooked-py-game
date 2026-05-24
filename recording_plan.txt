@@ -1,0 +1,69 @@
+Plan sugerido de 36 grabaciones
+
+Regla:
+- Meta actual: 12 niveles, 3 grabaciones por nivel.
+- Total: 12 x 3 = 36 grabaciones completas.
+- Cada partida debe durar 250 timesteps.
+- Usa el menu interactivo para no editar YAML manualmente.
+- Si usas niveles custom, tambien debes entregar sus archivos .layout.
+
+Niveles oficiales incluidos:
+- cramped_room
+- asymmetric_advantages
+- coordination_ring
+- counter_circuit
+- forced_coordination
+- large_room
+- simple_o
+- simple_tomato
+- small_corridor
+- soup_coordination
+
+Niveles custom creados:
+- configs/layouts/custom_zigzag_kitchen.layout
+- configs/layouts/custom_dual_pots.layout
+
+Orden sugerido:
+01. cramped_room              agent_0=greedy_full_task
+02. cramped_room              agent_0=random_motion
+03. cramped_room              agent_0=stay
+04. asymmetric_advantages     agent_0=stay
+05. asymmetric_advantages     agent_0=greedy_full_task
+06. asymmetric_advantages     agent_0=random_motion
+07. coordination_ring         agent_0=random_motion
+08. coordination_ring         agent_0=stay
+09. coordination_ring         agent_0=greedy_full_task
+10. counter_circuit           agent_0=greedy_full_task
+11. counter_circuit           agent_0=random_motion
+12. counter_circuit           agent_0=stay
+13. forced_coordination       agent_0=stay
+14. forced_coordination       agent_0=greedy_full_task
+15. forced_coordination       agent_0=random_motion
+16. large_room                agent_0=random_motion
+17. large_room                agent_0=stay
+18. large_room                agent_0=greedy_full_task
+19. simple_o                  agent_0=greedy_full_task
+20. simple_o                  agent_0=random_motion
+21. simple_o                  agent_0=stay
+22. simple_tomato             agent_0=stay
+23. simple_tomato             agent_0=greedy_full_task
+24. simple_tomato             agent_0=random_motion
+25. small_corridor            agent_0=random_motion
+26. small_corridor            agent_0=stay
+27. small_corridor            agent_0=greedy_full_task
+28. soup_coordination         agent_0=greedy_full_task
+29. soup_coordination         agent_0=random_motion
+30. soup_coordination         agent_0=stay
+31. custom_zigzag_kitchen     agent_0=stay
+32. custom_zigzag_kitchen     agent_0=greedy_full_task
+33. custom_zigzag_kitchen     agent_0=random_motion
+34. custom_dual_pots          agent_0=random_motion
+35. custom_dual_pots          agent_0=stay
+36. custom_dual_pots          agent_0=greedy_full_task
+
+Comandos:
+- Activar entorno: source .venv/bin/activate
+- Menu interactivo recomendado: python -m src.game_menu
+- Probar random: python -m src.run_game --config configs/play.yaml
+- Grabar directo: python -m src.collect_demonstrations --config configs/collect_demonstrations.yaml
+- Ver progreso: python -m src.dataset_progress
