@@ -3,3 +3,10 @@
 custom_zigzag_kitchen | configs/layouts/custom_zigzag_kitchen.layout | 300 | 8000000 | --partner solo_heavy --anneal-frac 0.8 --bc-data data/bc/custom_zigzag_kitchen.npz --bc-epochs 8
 # M4: self-play FCP-lite (custom_room, 2do mejor blanco)
 custom_room | configs/layouts/custom_room.layout | 300 | 8000000 | --selfplay --anneal-frac 0.8
+# --- backlog (encolado con --dependency=afterany, hereda el nodo del job previo) ---
+# idx2: M3 en custom_room (2do blanco)
+custom_room | configs/layouts/custom_room.layout | 301 | 8000000 | --partner solo_heavy --anneal-frac 0.8 --bc-data data/bc/custom_room.npz --bc-epochs 8
+# idx3: M4 self-play en zigzag (mejor blanco)
+custom_zigzag_kitchen | configs/layouts/custom_zigzag_kitchen.layout | 301 | 8000000 | --selfplay --anneal-frac 0.8
+# idx4: M3 en dual_pots
+custom_dual_pots | configs/layouts/custom_dual_pots.layout | 300 | 6000000 | --partner solo_heavy --anneal-frac 0.8 --bc-data data/bc/custom_dual_pots.npz --bc-epochs 8
