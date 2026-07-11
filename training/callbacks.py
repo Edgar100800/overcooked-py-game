@@ -36,6 +36,41 @@ class ShapingAnnealCallback(BaseCallback):
         return True
 
 
+class PartnerCurriculumCallback(BaseCallback):
+    """Curriculum de compañeros: fase-1 (solo) hasta switch_frac, luego fase-2 (coop).
+
+    Fuerza aprender el ciclo COMPLETO en solitario antes de introducir cooperación, para
+    que el PPO no colapse vs random_motion (ver STEP A-2 del plan).
+    """
+    def __init__(self, total_timesteps: int, switch_frac: float,
+                 phase1: dict, phase2: dict, verbose=0):
+        super().__init__(verbose)
+        self.total_timesteps = total_timesteps
+        self.switch_frac = switch_frac
+        self.phase1 = phase1
+        self.phase2 = phase2
+        self._phase = 0
+
+    def _apply(self, weights, phase):
+        try:
+            self.training_env.env_method("set_partner_weights", weights)
+            self._phase = phase
+            if self.verbose:
+                print(f"[curriculum] step={self.num_timesteps} -> fase {phase}: {weights}")
+        except Exception:
+            pass
+
+    def _on_training_start(self) -> None:
+        self._apply(self.phase1, 1)
+
+    def _on_rollout_start(self) -> None:
+        if self._phase == 1 and self.num_timesteps >= self.switch_frac * self.total_timesteps:
+            self._apply(self.phase2, 2)
+
+    def _on_step(self) -> bool:
+        return True
+
+
 class OfficialScoreEvalCallback(BaseCallback):
     def __init__(self, eval_env_config: dict, out_dir: str, eval_freq: int = 100000,
                  n_eval_episodes: int = 6, verbose=1):

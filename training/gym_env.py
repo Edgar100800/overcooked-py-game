@@ -55,6 +55,10 @@ class SingleAgentOvercooked(gym.Env):
     def set_coef(self, coef: float):
         self.coef = float(coef)
 
+    # --- pesos de compañeros seteados por callback (curriculum) ---
+    def set_partner_weights(self, weights: dict):
+        self.population.set_weights(weights)
+
     def _encode(self, state, idx) -> np.ndarray:
         enc = self.mdp.lossless_state_encoding(state)[idx]
         return np.ascontiguousarray(np.asarray(enc, dtype=np.float32).transpose(2, 0, 1))

@@ -79,9 +79,20 @@ class PartnerPopulation:
         if not self.selfplay_models and self.weights.get("self_play", 0) > 0:
             self.weights["greedy"] = self.weights.get("greedy", 0) + self.weights["self_play"]
             self.weights["self_play"] = 0.0
+        self._recompute()
+
+    def _recompute(self):
         self._kinds = list(self.weights.keys())
         w = np.array([self.weights[k] for k in self._kinds], dtype=float)
         self._probs = w / w.sum()
+
+    def set_weights(self, weights: dict):
+        """Cambia los pesos en caliente (para curriculum). Redistribuye self_play si no hay modelos."""
+        self.weights = dict(weights)
+        if not self.selfplay_models and self.weights.get("self_play", 0) > 0:
+            self.weights["greedy"] = self.weights.get("greedy", 0) + self.weights["self_play"]
+            self.weights["self_play"] = 0.0
+        self._recompute()
 
     def sample(self):
         kind = self._kinds[int(self.rng.choice(len(self._kinds), p=self._probs))]

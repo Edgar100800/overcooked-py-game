@@ -91,10 +91,12 @@ def main():
     ap.add_argument("--horizon", type=int, default=200, help="horizon de ENTRENAMIENTO")
     ap.add_argument("--no-subproc", action="store_true")
     ap.add_argument("--partner", default="population",
-                    choices=["population", "greedy", "greedy_heavy"],
-                    help="greedy=100% greedy (sobreajusta, rompe G8 vs random). "
-                         "greedy_heavy=fuerte vs greedy PERO robusto vs random (recomendado). "
+                    choices=["population", "greedy", "greedy_heavy", "solo_heavy"],
+                    help="greedy=100% (sobreajusta). greedy_heavy=55% greedy. "
+                         "solo_heavy=60% no-cooperativo (stay+random) -> autosuficiente. "
                          "population=default balanceado.")
+    ap.add_argument("--curriculum", action="store_true",
+                    help="fase-1 solo (stay/random 50/50) hasta 35%, luego solo_heavy (STEP A-2)")
     ap.add_argument("--no-anneal", action="store_true",
                     help="shaping fijo 1.0 sin annealing (§12-C.1)")
     args = ap.parse_args()
@@ -105,7 +107,8 @@ def main():
     torch.set_num_threads(1)
 
     from stable_baselines3.common.vec_env import VecMonitor
-    from training.callbacks import ShapingAnnealCallback, OfficialScoreEvalCallback
+    from training.callbacks import (ShapingAnnealCallback, OfficialScoreEvalCallback,
+                                    PartnerCurriculumCallback)
 
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -115,6 +118,7 @@ def main():
                   "old_dynamics": True}
     eval_env_config = dict(env_config)
 
+    SOLO_HEAVY = {"stay": 0.25, "random_motion": 0.35, "greedy": 0.30, "greedy_sticky_eps": 0.10}
     if args.partner == "greedy":
         partner_weights = {"greedy": 1.0}
     elif args.partner == "greedy_heavy":
@@ -122,8 +126,14 @@ def main():
         # gate G8 (que prueba random_motion). Sin self-play (evita dependencia de ckpts).
         partner_weights = {"greedy": 0.55, "greedy_sticky_eps": 0.15,
                            "random_motion": 0.25, "stay": 0.05}
+    elif args.partner == "solo_heavy":
+        partner_weights = dict(SOLO_HEAVY)   # 60% no-cooperativo -> fuerza el solo
     else:
         partner_weights = None
+
+    # Curriculum: arrancar en fase-1 (solo puro) y dejar que el callback pase a solo_heavy.
+    if args.curriculum:
+        partner_weights = {"stay": 0.5, "random_motion": 0.5}   # fase-1
     venv = make_vec_env(env_config, args.n_envs, partner_weights=partner_weights,
                         seed=args.seed, use_subproc=not args.no_subproc)
     venv = VecMonitor(venv)
@@ -136,6 +146,10 @@ def main():
     if not args.no_anneal:
         callbacks.insert(0, ShapingAnnealCallback(args.timesteps, args.anneal_frac))
     # con --no-anneal el coef queda en initial_coef=1.0 (env) todo el entrenamiento
+    if args.curriculum:
+        callbacks.insert(0, PartnerCurriculumCallback(
+            args.timesteps, switch_frac=0.35,
+            phase1={"stay": 0.5, "random_motion": 0.5}, phase2=dict(SOLO_HEAVY), verbose=1))
 
     # Config versionado junto al modelo (PLAN §16.2)
     (out / "train_config.json").write_text(json.dumps(vars(args), indent=2))
