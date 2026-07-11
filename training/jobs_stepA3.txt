@@ -1,0 +1,4 @@
+# Reentrenamiento ROBUSTO greedy_heavy (fuerte vs greedy, robusto vs random -> pasa G8)
+cramped_room | - | 102 | 8000000 | --partner greedy_heavy --anneal-frac 0.8
+custom_room | configs/layouts/custom_room.layout | 101 | 8000000 | --partner greedy_heavy --anneal-frac 0.8
+custom_dual_pots | configs/layouts/custom_dual_pots.layout | 100 | 8000000 | --partner greedy_heavy --anneal-frac 0.8

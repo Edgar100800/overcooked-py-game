@@ -90,8 +90,11 @@ def main():
     ap.add_argument("--eval-freq", type=int, default=200_000)
     ap.add_argument("--horizon", type=int, default=200, help="horizon de ENTRENAMIENTO")
     ap.add_argument("--no-subproc", action="store_true")
-    ap.add_argument("--partner", default="population", choices=["population", "greedy"],
-                    help="greedy = companero greedy FIJO 100% (§12-C.3, layouts dificiles)")
+    ap.add_argument("--partner", default="population",
+                    choices=["population", "greedy", "greedy_heavy"],
+                    help="greedy=100% greedy (sobreajusta, rompe G8 vs random). "
+                         "greedy_heavy=fuerte vs greedy PERO robusto vs random (recomendado). "
+                         "population=default balanceado.")
     ap.add_argument("--no-anneal", action="store_true",
                     help="shaping fijo 1.0 sin annealing (§12-C.1)")
     args = ap.parse_args()
@@ -112,7 +115,15 @@ def main():
                   "old_dynamics": True}
     eval_env_config = dict(env_config)
 
-    partner_weights = {"greedy": 1.0} if args.partner == "greedy" else None
+    if args.partner == "greedy":
+        partner_weights = {"greedy": 1.0}
+    elif args.partner == "greedy_heavy":
+        # Fuerte vs greedy (esc.1-3) pero con random suficiente para NO colapsar en el
+        # gate G8 (que prueba random_motion). Sin self-play (evita dependencia de ckpts).
+        partner_weights = {"greedy": 0.55, "greedy_sticky_eps": 0.15,
+                           "random_motion": 0.25, "stay": 0.05}
+    else:
+        partner_weights = None
     venv = make_vec_env(env_config, args.n_envs, partner_weights=partner_weights,
                         seed=args.seed, use_subproc=not args.no_subproc)
     venv = VecMonitor(venv)
