@@ -1,0 +1,2 @@
+asymmetric_advantages | - | 100 | 5000000 | --partner greedy --anneal-frac 0.8
+custom_room | configs/layouts/custom_room.layout | 100 | 4000000 | --partner greedy --anneal-frac 0.8
