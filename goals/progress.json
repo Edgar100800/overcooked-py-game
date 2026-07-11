@@ -21,6 +21,28 @@
     "passed": true,
     "timestamp": "20260711_005619"
   },
+  "G1": {
+    "artifact_dir": "outputs/gates/G1_20260711_012029",
+    "metric": {
+      "per_cell": {
+        "G1/cramped_room/planner-vs-greedy": {
+          "invalids": 0,
+          "latency_max": 0.10074209421873093,
+          "latency_p50": 0.033130403608083725,
+          "latency_p99": 0.06564312148839235,
+          "mean_score": 60221.0,
+          "mean_soups": 6.0,
+          "min_soups": 6.0,
+          "n_episodes": 5,
+          "timeouts": 0
+        }
+      },
+      "synthetic_ok": true,
+      "verify_ok": true
+    },
+    "passed": true,
+    "timestamp": "20260711_012030"
+  },
   "G2": {
     "artifact_dir": "outputs/gates/G2_20260711_005619",
     "metric": {
@@ -206,6 +228,520 @@
     },
     "passed": true,
     "timestamp": "20260711_005641"
+  },
+  "G5": {
+    "artifact_dir": "outputs/gates/G5_20260711_010939",
+    "metric": {
+      "check_env_ok": true,
+      "layout": "cramped_room",
+      "no_nan": true,
+      "random_shaped_mean": 1.5,
+      "shaped_improves": true,
+      "timesteps": 150000,
+      "trained_shaped_mean": 2.625
+    },
+    "passed": true,
+    "timestamp": "20260711_011300"
+  },
+  "G6": {
+    "artifact_dir": "outputs/gates/G6_20260711_011943",
+    "metric": {
+      "student": {
+        "invalids": 0,
+        "latency_max": 3.8788309320807457,
+        "latency_p50": 0.8194399997591972,
+        "latency_p99": 1.2577272020280361,
+        "mean_score": 30135.5,
+        "mean_soups": 3.0,
+        "min_soups": 0.0,
+        "n_episodes": 10,
+        "timeouts": 0
+      },
+      "verify_ok": true
+    },
+    "passed": true,
+    "timestamp": "20260711_011948"
+  },
+  "G7": {
+    "artifact_dir": "outputs/gates/G7_20260711_011949",
+    "metric": {
+      "beats_planner": false,
+      "by_swap": {
+        "noswap": {
+          "planner": 60221.0,
+          "ppo": 60271.0
+        },
+        "swap": {
+          "planner": 70374.0,
+          "ppo": 0.0
+        }
+      },
+      "latency_ok": true,
+      "latency_p99": 1.0474190488457678,
+      "verify_ok": true
+    },
+    "passed": false,
+    "timestamp": "20260711_011955"
+  },
+  "G8": {
+    "artifact_dir": "outputs/gates/G8_20260711_011839",
+    "metric": {
+      "per_cell": {
+        "G8/asymmetric_advantages/student-vs-greedy": {
+          "ok": true,
+          "planner_baseline": {
+            "invalids": 0,
+            "latency_max": 0.11197524145245552,
+            "latency_p50": 0.03560539335012436,
+            "latency_p99": 0.08168610278517008,
+            "mean_score": 65428.5,
+            "mean_soups": 6.5,
+            "min_soups": 5.0,
+            "n_episodes": 10,
+            "timeouts": 0
+          },
+          "student": {
+            "invalids": 0,
+            "latency_max": 0.11151609942317009,
+            "latency_p50": 0.03504101186990738,
+            "latency_p99": 0.08123514708131549,
+            "mean_score": 65428.5,
+            "mean_soups": 6.5,
+            "min_soups": 5.0,
+            "n_episodes": 10,
+            "timeouts": 0
+          }
+        },
+        "G8/asymmetric_advantages/student-vs-greedy_eps": {
+          "ok": true,
+          "planner_baseline": {
+            "invalids": 0,
+            "latency_max": 0.1513189636170864,
+            "latency_p50": 0.036318786442279816,
+            "latency_p99": 0.07999252062290901,
+            "mean_score": 73448.3,
+            "mean_soups": 7.3,
+            "min_soups": 5.0,
+            "n_episodes": 10,
+            "timeouts": 0
+          },
+          "student": {
+            "invalids": 0,
+            "latency_max": 0.09837141260504723,
+            "latency_p50": 0.03568804822862148,
+            "latency_p99": 0.07844189647585152,
+            "mean_score": 73448.3,
+            "mean_soups": 7.3,
+            "min_soups": 5.0,
+            "n_episodes": 10,
+            "timeouts": 0
+          }
+        },
+        "G8/asymmetric_advantages/student-vs-random_motion": {
+          "ok": true,
+          "planner_baseline": {
+            "invalids": 0,
+            "latency_max": 0.11222902685403824,
+            "latency_p50": 0.03659538924694061,
+            "latency_p99": 0.08124588057398796,
+            "mean_score": 50690.0,
+            "mean_soups": 5.0,
+            "min_soups": 4.0,
+            "n_episodes": 10,
+            "timeouts": 0
+          },
+          "student": {
+            "invalids": 0,
+            "latency_max": 0.09813718497753143,
+            "latency_p50": 0.03673438914120197,
+            "latency_p99": 0.08114734198898071,
+            "mean_score": 50690.0,
+            "mean_soups": 5.0,
+            "min_soups": 4.0,
+            "n_episodes": 10,
+            "timeouts": 0
+          }
+        },
+        "G8/coordination_ring/student-vs-greedy": {
+          "ok": true,
+          "planner_baseline": {
+            "invalids": 0,
+            "latency_max": 0.26078661903738976,
+            "latency_p50": 0.04745693877339363,
+            "latency_p99": 0.07096605841070414,
+            "mean_score": 80243.5,
+            "mean_soups": 8.0,
+            "min_soups": 8.0,
+            "n_episodes": 10,
+            "timeouts": 0
+          },
+          "student": {
+            "invalids": 0,
+            "latency_max": 0.09168917313218117,
+            "latency_p50": 0.047215959057211876,
+            "latency_p99": 0.06905343849211923,
+            "mean_score": 80243.5,
+            "mean_soups": 8.0,
+            "min_soups": 8.0,
+            "n_episodes": 10,
+            "timeouts": 0
+          }
+        },
+        "G8/coordination_ring/student-vs-greedy_eps": {
+          "ok": true,
+          "planner_baseline": {
+            "invalids": 0,
+            "latency_max": 0.2683158963918686,
+            "latency_p50": 0.04836777225136757,
+            "latency_p99": 0.0706947594881057,
+            "mean_score": 47756.5,
+            "mean_soups": 4.7,
+            "min_soups": 2.0,
+            "n_episodes": 10,
+            "timeouts": 0
+          },
+          "student": {
+            "invalids": 0,
+            "latency_max": 0.09569618850946426,
+            "latency_p50": 0.04710652865469456,
+            "latency_p99": 0.06994074676185835,
+            "mean_score": 47756.5,
+            "mean_soups": 4.7,
+            "min_soups": 2.0,
+            "n_episodes": 10,
+            "timeouts": 0
+          }
+        },
+        "G8/coordination_ring/student-vs-random_motion": {
+          "ok": true,
+          "planner_baseline": {
+            "invalids": 0,
+            "latency_max": 0.1374981366097927,
+            "latency_p50": 0.04922808147966862,
+            "latency_p99": 0.07843676954507824,
+            "mean_score": 26736.6,
+            "mean_soups": 2.6,
+            "min_soups": 2.0,
+            "n_episodes": 10,
+            "timeouts": 0
+          },
+          "student": {
+            "invalids": 0,
+            "latency_max": 0.7829167880117893,
+            "latency_p50": 0.04779454320669174,
+            "latency_p99": 0.06797157693654297,
+            "mean_score": 26736.6,
+            "mean_soups": 2.6,
+            "min_soups": 2.0,
+            "n_episodes": 10,
+            "timeouts": 0
+          }
+        },
+        "G8/cramped_room/student-vs-greedy": {
+          "ok": true,
+          "planner_baseline": {
+            "invalids": 0,
+            "latency_max": 0.17616292461752892,
+            "latency_p50": 0.031454022973775864,
+            "latency_p99": 0.062120389193296426,
+            "mean_score": 65297.5,
+            "mean_soups": 6.5,
+            "min_soups": 6.0,
+            "n_episodes": 10,
+            "timeouts": 0
+          },
+          "student": {
+            "invalids": 0,
+            "latency_max": 0.09803799912333488,
+            "latency_p50": 0.0331441406160593,
+            "latency_p99": 0.06317315157502884,
+            "mean_score": 65297.5,
+            "mean_soups": 6.5,
+            "min_soups": 6.0,
+            "n_episodes": 10,
+            "timeouts": 0
+          }
+        },
+        "G8/cramped_room/student-vs-greedy_eps": {
+          "ok": true,
+          "planner_baseline": {
+            "invalids": 0,
+            "latency_max": 0.09121326729655266,
+            "latency_p50": 0.028622103855013847,
+            "latency_p99": 0.06080612074583769,
+            "mean_score": 28539.8,
+            "mean_soups": 2.7,
+            "min_soups": 1.0,
+            "n_episodes": 10,
+            "timeouts": 0
+          },
+          "student": {
+            "invalids": 0,
+            "latency_max": 0.07750187069177628,
+            "latency_p50": 0.028667040169239044,
+            "latency_p99": 0.05981280468404291,
+            "mean_score": 28539.8,
+            "mean_soups": 2.7,
+            "min_soups": 1.0,
+            "n_episodes": 10,
+            "timeouts": 0
+          }
+        },
+        "G8/cramped_room/student-vs-random_motion": {
+          "ok": true,
+          "planner_baseline": {
+            "invalids": 0,
+            "latency_max": 0.10883016511797905,
+            "latency_p50": 0.03402191214263439,
+            "latency_p99": 0.0634471559897065,
+            "mean_score": 50386.0,
+            "mean_soups": 5.0,
+            "min_soups": 5.0,
+            "n_episodes": 10,
+            "timeouts": 0
+          },
+          "student": {
+            "invalids": 0,
+            "latency_max": 0.10614702478051186,
+            "latency_p50": 0.033556018024683,
+            "latency_p99": 0.062285009771585444,
+            "mean_score": 50386.0,
+            "mean_soups": 5.0,
+            "min_soups": 5.0,
+            "n_episodes": 10,
+            "timeouts": 0
+          }
+        },
+        "G8/custom_dual_pots/student-vs-greedy": {
+          "ok": true,
+          "planner_baseline": {
+            "invalids": 0,
+            "latency_max": 0.10388391092419624,
+            "latency_p50": 0.04924344830214977,
+            "latency_p99": 0.0746958144009113,
+            "mean_score": 56073.0,
+            "mean_soups": 5.5,
+            "min_soups": 3.0,
+            "n_episodes": 10,
+            "timeouts": 0
+          },
+          "student": {
+            "invalids": 0,
+            "latency_max": 0.09530317038297653,
+            "latency_p50": 0.04864530637860298,
+            "latency_p99": 0.07414193358272313,
+            "mean_score": 56073.0,
+            "mean_soups": 5.5,
+            "min_soups": 3.0,
+            "n_episodes": 10,
+            "timeouts": 0
+          }
+        },
+        "G8/custom_dual_pots/student-vs-greedy_eps": {
+          "ok": true,
+          "planner_baseline": {
+            "invalids": 0,
+            "latency_max": 0.1033339649438858,
+            "latency_p50": 0.03837002441287041,
+            "latency_p99": 0.07992709986865514,
+            "mean_score": 77524.1,
+            "mean_soups": 7.7,
+            "min_soups": 6.0,
+            "n_episodes": 10,
+            "timeouts": 0
+          },
+          "student": {
+            "invalids": 0,
+            "latency_max": 0.11083995923399925,
+            "latency_p50": 0.036765821278095245,
+            "latency_p99": 0.07952868472784749,
+            "mean_score": 77524.1,
+            "mean_soups": 7.7,
+            "min_soups": 6.0,
+            "n_episodes": 10,
+            "timeouts": 0
+          }
+        },
+        "G8/custom_dual_pots/student-vs-random_motion": {
+          "ok": true,
+          "planner_baseline": {
+            "invalids": 0,
+            "latency_max": 0.10180706158280373,
+            "latency_p50": 0.03978959284722805,
+            "latency_p99": 0.08094711694866402,
+            "mean_score": 60570.3,
+            "mean_soups": 6.0,
+            "min_soups": 6.0,
+            "n_episodes": 10,
+            "timeouts": 0
+          },
+          "student": {
+            "invalids": 0,
+            "latency_max": 0.11870265007019043,
+            "latency_p50": 0.038575613871216774,
+            "latency_p99": 0.07484370376914735,
+            "mean_score": 60570.3,
+            "mean_soups": 6.0,
+            "min_soups": 6.0,
+            "n_episodes": 10,
+            "timeouts": 0
+          }
+        },
+        "G8/custom_room/student-vs-greedy": {
+          "ok": true,
+          "planner_baseline": {
+            "invalids": 0,
+            "latency_max": 0.09750993922352791,
+            "latency_p50": 0.03164494410157204,
+            "latency_p99": 0.06317809689790008,
+            "mean_score": 60209.5,
+            "mean_soups": 6.0,
+            "min_soups": 6.0,
+            "n_episodes": 10,
+            "timeouts": 0
+          },
+          "student": {
+            "invalids": 0,
+            "latency_max": 0.11471426114439964,
+            "latency_p50": 0.031125033274292946,
+            "latency_p99": 0.06063401699066159,
+            "mean_score": 60209.5,
+            "mean_soups": 6.0,
+            "min_soups": 6.0,
+            "n_episodes": 10,
+            "timeouts": 0
+          }
+        },
+        "G8/custom_room/student-vs-greedy_eps": {
+          "ok": true,
+          "planner_baseline": {
+            "invalids": 0,
+            "latency_max": 0.08593732491135597,
+            "latency_p50": 0.029709888622164726,
+            "latency_p99": 0.06501799449324604,
+            "mean_score": 34218.4,
+            "mean_soups": 3.3,
+            "min_soups": 1.0,
+            "n_episodes": 10,
+            "timeouts": 0
+          },
+          "student": {
+            "invalids": 0,
+            "latency_max": 0.1310422085225582,
+            "latency_p50": 0.02962048165500164,
+            "latency_p99": 0.06084897555410853,
+            "mean_score": 34218.4,
+            "mean_soups": 3.3,
+            "min_soups": 1.0,
+            "n_episodes": 10,
+            "timeouts": 0
+          }
+        },
+        "G8/custom_room/student-vs-random_motion": {
+          "ok": true,
+          "planner_baseline": {
+            "invalids": 0,
+            "latency_max": 0.11779181659221649,
+            "latency_p50": 0.033254269510507584,
+            "latency_p99": 0.0659783976152539,
+            "mean_score": 50388.7,
+            "mean_soups": 5.0,
+            "min_soups": 5.0,
+            "n_episodes": 10,
+            "timeouts": 0
+          },
+          "student": {
+            "invalids": 0,
+            "latency_max": 0.09274901822209358,
+            "latency_p50": 0.033389078453183174,
+            "latency_p99": 0.06357145495712742,
+            "mean_score": 50388.7,
+            "mean_soups": 5.0,
+            "min_soups": 5.0,
+            "n_episodes": 10,
+            "timeouts": 0
+          }
+        },
+        "G8/custom_zigzag_kitchen/student-vs-greedy": {
+          "ok": true,
+          "planner_baseline": {
+            "invalids": 0,
+            "latency_max": 0.08465023711323738,
+            "latency_p50": 0.025512417778372765,
+            "latency_p99": 0.06518939509987827,
+            "mean_score": 36287.0,
+            "mean_soups": 3.5,
+            "min_soups": 1.0,
+            "n_episodes": 10,
+            "timeouts": 0
+          },
+          "student": {
+            "invalids": 0,
+            "latency_max": 0.08137896656990051,
+            "latency_p50": 0.02590194344520569,
+            "latency_p99": 0.06445564329624175,
+            "mean_score": 36287.0,
+            "mean_soups": 3.5,
+            "min_soups": 1.0,
+            "n_episodes": 10,
+            "timeouts": 0
+          }
+        },
+        "G8/custom_zigzag_kitchen/student-vs-greedy_eps": {
+          "ok": true,
+          "planner_baseline": {
+            "invalids": 0,
+            "latency_max": 0.10634679347276688,
+            "latency_p50": 0.03311550244688988,
+            "latency_p99": 0.0673306360840797,
+            "mean_score": 41879.0,
+            "mean_soups": 4.1,
+            "min_soups": 2.0,
+            "n_episodes": 10,
+            "timeouts": 0
+          },
+          "student": {
+            "invalids": 0,
+            "latency_max": 0.10813307017087936,
+            "latency_p50": 0.03355415537953377,
+            "latency_p99": 0.0702424300834536,
+            "mean_score": 41879.0,
+            "mean_soups": 4.1,
+            "min_soups": 2.0,
+            "n_episodes": 10,
+            "timeouts": 0
+          }
+        },
+        "G8/custom_zigzag_kitchen/student-vs-random_motion": {
+          "ok": true,
+          "planner_baseline": {
+            "invalids": 0,
+            "latency_max": 0.7560909725725651,
+            "latency_p50": 0.04373188130557537,
+            "latency_p99": 0.07039342541247604,
+            "mean_score": 50425.0,
+            "mean_soups": 5.0,
+            "min_soups": 5.0,
+            "n_episodes": 10,
+            "timeouts": 0
+          },
+          "student": {
+            "invalids": 0,
+            "latency_max": 0.7587019354104996,
+            "latency_p50": 0.04323828034102917,
+            "latency_p99": 0.06900654174387455,
+            "mean_score": 50425.0,
+            "mean_soups": 5.0,
+            "min_soups": 5.0,
+            "n_episodes": 10,
+            "timeouts": 0
+          }
+        }
+      },
+      "verify_ok": true
+    },
+    "passed": true,
+    "timestamp": "20260711_011854"
   },
   "_comment": "Estado por gate. LO ESCRIBE SOLO evaluation/run_gate.py (PLAN.md \u00a710). Editarlo a mano = corrida invalida."
 }

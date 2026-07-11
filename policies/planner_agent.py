@@ -50,7 +50,11 @@ class PlannerAgent:
         self.avoid_teammate = bool(config.get("avoid_teammate", True))
         self.stuck_threshold = int(config.get("stuck_threshold", 3))
         self.detour_len = int(config.get("detour_len", 2))
-        self.rng = np.random.default_rng(config.get("seed"))
+        # Semilla FIJA por defecto (0): el unico componente estocastico es el desvio
+        # anti-deadlock; fijarla hace al planner DETERMINISTA y reproducible (PLAN §14)
+        # y garantiza que el StudentAgent en modo planner sea identico al planner puro
+        # (necesario para G8: "el selector nunca empeora").
+        self.rng = np.random.default_rng(config.get("seed", 0))
         self._reset_state()
 
     # ------------------------------------------------------------------ API

@@ -90,7 +90,65 @@ def _run_rollout_gate(gate_id: str, student_kind: str, seeds: list[int], out_dir
     return per_cell, verify_all_ok, verify_detail
 
 
-def run_gate(gate_id: str, student_kind: str = "planner") -> bool:
+def _run_g6_g7(gate_id, layout, layout_file, model_path, seeds, out_dir, results):
+    """G6: PPO vs greedy -> score>0 (>=1 sopa). G7: PPO > planner (con/sin swap) ->
+    habilita el modelo (models/<key>/enabled). Requiere models/<key>/best.zip."""
+    import numpy as np
+    key = Path(layout_file).stem if layout_file else layout
+    model = model_path or str(REPO / "models" / key / "best.zip")
+    if not Path(model).exists():
+        print(f"[run_gate] {gate_id}: falta el modelo {model}. Entrena primero "
+              f"(sbatch sbatch/train/run_train_ppo.sh).")
+        return False, {"error": f"modelo no encontrado: {model}"}, results
+
+    scfg = {"layout": layout, "layout_file": layout_file,
+            "model_path": model, "require_enabled": False}
+    student = gc.student_agent(scfg)
+    cfg_student = gc.make_config(layout, layout_file, student, gc.partner("greedy"))
+    swaps = [False, True]
+    res_s = run_rollouts(cfg_student, seeds=seeds, swaps=swaps, test_agent_key="agent_0")
+    ok_s, _ = verify_rollouts(res_s, tol=0.0)
+    agg_s = gc.aggregate_cell(res_s["episodes"], [e["steps"] for e in res_s["episodes"]])
+
+    if gate_id == "G6":
+        passed = bool(ok_s and agg_s["mean_soups"] >= 1.0)
+        metric = {"student": agg_s, "verify_ok": ok_s}
+        results["per_cell"] = {f"G6/{key}/ppo-vs-greedy": {"ok": passed, **agg_s}}
+        return passed, metric, results
+
+    # G7: comparar vs planner puro, por rol (swap) individual.
+    cfg_planner = gc.make_config(layout, layout_file, gc.planner_agent(), gc.partner("greedy"))
+    res_p = run_rollouts(cfg_planner, seeds=seeds, swaps=swaps, test_agent_key="agent_0")
+
+    def mean_score_by_swap(res, swap):
+        v = [e["score"] for e in res["episodes"] if e["role_swap"] == swap]
+        return float(np.mean(v)) if v else 0.0
+
+    beats = all(mean_score_by_swap(res_s, sw) > mean_score_by_swap(res_p, sw) for sw in swaps)
+    latency_ok = agg_s["latency_p99"] < 50.0
+    passed = bool(ok_s and beats and latency_ok)
+
+    detail = {sw and "swap" or "noswap":
+              {"ppo": mean_score_by_swap(res_s, sw), "planner": mean_score_by_swap(res_p, sw)}
+              for sw in swaps}
+    metric = {"beats_planner": beats, "latency_p99": agg_s["latency_p99"],
+              "latency_ok": latency_ok, "by_swap": detail, "verify_ok": ok_s}
+    results["per_cell"] = {f"G7/{key}": {"ok": passed, **metric}}
+
+    if passed:
+        enabled = REPO / "models" / key / "enabled"
+        enabled.parent.mkdir(parents=True, exist_ok=True)
+        enabled.write_text(f"habilitado por G7: PPO>planner en gate_seeds\n{detail}\n")
+        print(f"[run_gate] G7 PASS -> modelo habilitado: {enabled}")
+    else:
+        print(f"[run_gate] G7: PPO NO supera al planner en {key} -> selector queda en "
+              f"planner (decision valida, PLAN §11 G7).")
+    return passed, metric, results
+
+
+def run_gate(gate_id: str, student_kind: str = "planner",
+             layout: str = "cramped_room", layout_file: str | None = None,
+             model_path: str | None = None) -> bool:
     seeds = _load_seeds()
     out_dir = GATES_OUT / f"{gate_id}_{_timestamp()}"
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -139,10 +197,8 @@ def run_gate(gate_id: str, student_kind: str = "planner") -> bool:
         results["g5"] = metric
 
     elif gate_id in ("G6", "G7"):
-        print(f"[run_gate] {gate_id} requiere un modelo PPO entrenado (FASE 3). "
-              f"Usar: sbatch sbatch/train/... y luego este gate con --model.")
-        results["note"] = "requiere modelo PPO (FASE 3)"
-        passed = False
+        passed, metric, results = _run_g6_g7(gate_id, layout, layout_file, model_path,
+                                             seeds, out_dir, results)
     else:
         raise SystemExit(f"gate desconocido: {gate_id}")
 
@@ -206,8 +262,12 @@ def main():
     ap.add_argument("--student", default="planner",
                     choices=["planner", "student", "template_stay"],
                     help="que agente ocupa agent_0 en gates de rollout")
+    ap.add_argument("--layout", default="cramped_room", help="layout para G6/G7")
+    ap.add_argument("--layout-file", default=None, help=".layout custom para G6/G7")
+    ap.add_argument("--model", default=None, help="ruta a best.zip (G6/G7)")
     args = ap.parse_args()
-    ok = run_gate(args.gate, student_kind=args.student)
+    ok = run_gate(args.gate, student_kind=args.student, layout=args.layout,
+                  layout_file=args.layout_file, model_path=args.model)
     sys.exit(0 if ok else 1)
 
 

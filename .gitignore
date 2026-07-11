@@ -35,3 +35,8 @@ integrantes.txt
 models/
 # codegraph local index
 .codegraph/
+
+# logs de build/gates
+logs/*.log
+logs/*.out
+logs/*.err

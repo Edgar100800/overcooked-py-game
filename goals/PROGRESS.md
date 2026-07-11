@@ -36,7 +36,43 @@ Planner vs random_motion (autosuficiente) en 6 layouts, con y sin swap. mean_sou
 cramped 4.8, asymmetric 5.0, coordination_ring 3.1, custom_room 4.7,
 custom_dual_pots 6.0, custom_zigzag 5.0. Todos ≥1, 0 timeouts. verify_ok.
 
-**Estado:** G0,G2,G3,G4 aprobados (planner). Falta G1 (freeze), G5-G7 (PPO), G8
-(selector). G1 se corre al final, tras estabilizar run_gate con training/ y student.
+## G5 — PASS (2026-07-11)
+Gym env válido: `check_env` de SB3 pasa; PPO smoke (companero greedy fijo, shaping
+1.0, ent 0.05) sin NaN; shaped entrenado 2.625 > random 1.5 -> el pipeline aprende.
+
+## Smoke A100 — OK (2026-07-11)
+`sbatch sbatch/train/run_smoke_a100.sh` (job 46044) corrio en **ag001, MIG 1g.5gb**,
+`torch 2.7.1+cu118 cuda_available True NVIDIA A100-PCIE-40GB`. 151k steps @ 2281 fps,
+produjo models/cramped_room/smoke_a100/best.zip. El camino GPU/MIG/cuda funciona.
+
+## G8 — PASS (2026-07-11)
+Selector (modo solo-planner, sin modelos habilitados) en 6 layouts x {greedy,
+greedy_eps, random_motion} x swap = 18 celdas, 0 FAIL, 0 timeouts, 0 inválidas,
+score >= planner puro en cada celda. Fix clave: planner determinista (seed fija 0)
++ compañeros builtin con semilla derivada del episodio (reproducibilidad §14).
+
+## G6 — PASS (2026-07-11, modelo smoke)
+PPO smoke (150k) vs greedy en cramped_room: mean_soups=3.0 (>=1), p99=1.26ms. PPO
+aprende a hacer sopas. (Con 5M steps reales en A100 el techo es mayor.)
+
+## G7 — FAIL / decision "planner" (2026-07-11, modelo smoke)
+PPO smoke NO supera al planner: sin swap ppo~=planner, CON swap ppo=0 (el modelo de
+150k no aprendio el rol player-1). Sistema anti-regresion OK: NO escribe models/
+cramped_room/enabled -> el selector queda en el planner robusto. Re-correr tras el
+entrenamiento real de 5M steps (puede voltear a PASS y habilitar el modelo).
+
+## G1 — PASS (2026-07-11) -> FREEZE
+`official_score` reproduce 3 casos sintéticos y `verify.py`==reporte en rollout real.
+Se escribio evaluation/freeze.sha256 (4 archivos). evaluation/ CONGELADO (§10.1):
+run_gate verifica los checksums al inicio y aborta si cambian.
+
+**Estado noche:** G0-G6,G8 PASS. G7 pendiente de modelo real (5M steps A100). La
+entrega funcional esta GARANTIZADA (selector = planner robusto en cualquier layout).
+
+### Proximos pasos (corrida real A100)
+1. `sbatch sbatch/train/run_train_ppo.sh` (array 0-6, jobs.txt: layouts esc.1-3 x seeds).
+2. Al terminar: `FASE=ppo bash scripts/night_loop.sh` -> G6/G7 por layout (habilita
+   los que superen al planner) + re-evalua G8.
+3. `sbatch sbatch/eval/run_gate.sh G8` como verificacion final de la entrega.
 
 <!-- Las entradas de gate se agregan debajo a medida que run_gate.py los ejecuta -->

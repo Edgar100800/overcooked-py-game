@@ -1,0 +1,6 @@
+{
+  "gate_seeds.json": "e8802d02ec018ec34407348316c3dd5eba1a199f4c496a35037b277d5759866d",
+  "official_score.py": "310968767a2a5a68a1a14b34843fdcc034bffd8da9c07316b08011d3b2f596bf",
+  "run_gate.py": "cbfc7a2f53d77d18e2a2013b5e13b38dfae71eccf24eb092d2e7113d4b1504a1",
+  "verify.py": "e491efd454b32a606253c5a063ca0599fd41a6cc6c6a463bcbdb95ad25c7f1f4"
+}

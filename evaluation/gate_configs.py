@@ -119,8 +119,9 @@ def cells_for_gate(gate_id: str, student_kind: str = "planner") -> list[Cell]:
             cells.append(Cell(name, cfg, [False, True], f"G4/{name}/planner-vs-random"))
     elif gate_id == "G8":
         for name, lf in ALL_SIX:
+            scfg = {"layout": name, "layout_file": lf}  # activa PPO si esta habilitado
             for pk in ("greedy", "greedy_eps", "random_motion"):
-                cfg = make_config(name, lf, student_agent(), partner(pk))
+                cfg = make_config(name, lf, student_agent(scfg), partner(pk))
                 cells.append(Cell(name, cfg, [False, True], f"G8/{name}/student-vs-{pk}"))
     else:
         raise ValueError(f"gate {gate_id} no tiene celdas de rollout (ver run_gate.py)")

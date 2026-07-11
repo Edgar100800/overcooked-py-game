@@ -95,9 +95,26 @@ def run_rollouts(
     }
 
 
+def _seed_builtin_partners(config: dict, seed: int) -> dict:
+    """Inyecta una semilla DETERMINISTA en los partners builtin sin seed propio.
+
+    build_builtin_agent usa policy_config['seed'] (no el seed derivado del loader),
+    asi que sin esto los partners random/greedy quedan sin semilla (OS entropy) y no
+    son reproducibles -> rompe la comparacion student-vs-planner de G8 y el verify.
+    La semilla se deriva del episodio: diversa por gate_seed, identica entre corridas.
+    """
+    cfg = copy.deepcopy(config)
+    for key, offset in (("agent_0", 1000), ("agent_1", 2000)):
+        pc = cfg.get("policies", {}).get(key, {})
+        if str(pc.get("type", "builtin")).lower() == "builtin" and "seed" not in pc:
+            pc["seed"] = int(seed) + offset
+    return cfg
+
+
 def _run_one(config, env, obs_builder, seed, role_swap, test_agent_key,
              horizon, delivery_reward) -> dict[str, Any]:
     set_global_seed(seed)
+    config = _seed_builtin_partners(config, seed)
     agent0, agent1 = build_two_policies(config, env, obs_builder, seed=seed)
 
     # test_agent es el objeto de nuestra politica; su posicion depende del swap.

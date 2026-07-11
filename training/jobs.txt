@@ -1,0 +1,13 @@
+# Manifiesto de jobs de entrenamiento PPO (una linea por tarea del job array SLURM).
+# Formato:  layout | layout_file | seed | timesteps | extra_args
+# layout_file = "-" para layouts oficiales (se usa --layout). Lineas con # se ignoran.
+# El indice del array (SLURM_ARRAY_TASK_ID) selecciona la N-esima linea NO comentada.
+#
+# Matriz recomendada domingo (PLAN §16.4): layouts esc. 1-3 x seeds {0,1} + libre.
+cramped_room | - | 0 | 5000000 |
+cramped_room | - | 1 | 5000000 |
+asymmetric_advantages | - | 0 | 5000000 |
+asymmetric_advantages | - | 1 | 5000000 |
+coordination_ring | - | 0 | 5000000 |
+coordination_ring | - | 1 | 5000000 |
+coordination_ring | - | 0 | 8000000 | --ent-coef 0.05
