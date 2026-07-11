@@ -1,0 +1,6 @@
+# Step A — PPO especializado vs greedy (compañero del gate G7 y de escenarios 1-3).
+# Seeds 100+ para NO pisar los modelos-poblacion (seed0/1). --anneal-frac 0.8 (shaping
+# mas largo, §12-D.2). Formato: layout | layout_file | seed | timesteps | extra
+cramped_room | - | 100 | 5000000 | --partner greedy --anneal-frac 0.8
+cramped_room | - | 101 | 5000000 | --partner greedy --anneal-frac 0.8
+coordination_ring | - | 100 | 5000000 | --partner greedy --anneal-frac 0.8
