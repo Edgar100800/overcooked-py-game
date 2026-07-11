@@ -1,0 +1,3 @@
+# STEP A-2: enfoques menos greedy-dependientes en los layouts de planner debil
+custom_zigzag_kitchen | configs/layouts/custom_zigzag_kitchen.layout | 200 | 8000000 | --partner solo_heavy --anneal-frac 0.8
+custom_dual_pots | configs/layouts/custom_dual_pots.layout | 200 | 8000000 | --curriculum --anneal-frac 0.8
