@@ -38,11 +38,17 @@ def _mean_score(cfg):
     return float(np.mean([e["score"] for e in res["episodes"]]))
 
 
-def evaluate(layout, layout_file, canonical_key):
-    """Devuelve (robusto, detalle) comparando student-PPO vs planner por companero."""
+def evaluate(layout, layout_file, model_path):
+    """(robusto, detalle) comparando student-PPO vs planner por companero.
+
+    RACE-SAFE: el student carga el candidato via model_path EXPLICITO (sin tocar la
+    ruta canonica models/<key>/best.zip), asi varios enable-checks del mismo layout
+    pueden correr en paralelo sin pisarse.
+    """
     detail = {}
     robust = True
-    scfg = {"layout": layout, "layout_file": layout_file}  # usa models/<key>/best.zip + enabled
+    scfg = {"layout": layout, "layout_file": layout_file,
+            "model_path": str(model_path), "require_enabled": False}
     for pk in PARTNERS:
         student = _mean_score(gc.make_config(layout, layout_file, gc.student_agent(scfg), gc.partner(pk)))
         planner = _mean_score(gc.make_config(layout, layout_file, gc.planner_agent(), gc.partner(pk)))
@@ -60,23 +66,19 @@ def main():
     args = ap.parse_args()
 
     key = Path(args.layout_file).stem if args.layout_file else args.layout
-    model_dir = REPO / "models" / key
-    canonical = model_dir / "best.zip"
-    enabled = model_dir / "enabled"
-
-    model_dir.mkdir(parents=True, exist_ok=True)
-    shutil.copy(args.model, canonical)   # ruta que carga el student
-    enabled.write_text(f"candidato {args.model}\n")  # activar para la evaluacion
-
-    robust, detail = evaluate(args.layout, args.layout_file, key)
-    print(json.dumps({"layout": key, "robust": robust, "por_companero": detail}, indent=2))
+    robust, detail = evaluate(args.layout, args.layout_file, args.model)
+    print(json.dumps({"layout": key, "model": args.model, "robust": robust,
+                      "por_companero": detail}, indent=2))
 
     if robust:
-        enabled.write_text(f"HABILITADO (robusto vs {PARTNERS}) modelo={args.model}\n{detail}\n")
+        # Solo al FINAL, y solo si es robusto, se toca la ruta canonica del despliegue.
+        model_dir = REPO / "models" / key
+        model_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copy(args.model, model_dir / "best.zip")
+        (model_dir / "enabled").write_text(
+            f"HABILITADO (robusto vs {PARTNERS}) modelo={args.model}\n{detail}\n")
         print(f"[enable] {key} HABILITADO: el PPO supera/iguala al planner en TODOS los companeros.")
     else:
-        enabled.unlink(missing_ok=True)
-        canonical.unlink(missing_ok=True)
         bad = [pk for pk, d in detail.items() if not d["ok"]]
         print(f"[enable] {key} NO habilitado: regresa vs {bad} -> queda en planner (entrega segura).")
 
