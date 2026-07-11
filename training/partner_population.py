@@ -72,14 +72,33 @@ class SelfPlayPartner:
 class PartnerPopulation:
     def __init__(self, weights: dict | None = None, selfplay_models: list | None = None,
                  seed=None):
-        self.weights = dict(weights or DEFAULT_WEIGHTS)
+        # _requested conserva los pesos pedidos: si self_play>0 pero aun no hay
+        # checkpoints, el peso va a greedy HASTA que add_selfplay_path() los aporte.
+        self._requested = dict(weights or DEFAULT_WEIGHTS)
+        self.weights = dict(self._requested)
         self.selfplay_models = selfplay_models or []
         self.rng = np.random.default_rng(seed)
-        # Si no hay modelos de self-play, redistribuir su peso a greedy.
         if not self.selfplay_models and self.weights.get("self_play", 0) > 0:
             self.weights["greedy"] = self.weights.get("greedy", 0) + self.weights["self_play"]
             self.weights["self_play"] = 0.0
         self._recompute()
+
+    def add_selfplay_path(self, path: str, max_pool: int = 6):
+        """Carga un checkpoint PPO congelado y lo agrega al pool (FCP-lite).
+
+        Al llegar el primer checkpoint se restauran los pesos pedidos (self_play
+        recupera su probabilidad). El pool se capa a max_pool (FIFO) manteniendo
+        diversidad de 'edades' del propio agente.
+        """
+        from stable_baselines3 import PPO
+        model = PPO.load(path, device="cpu")
+        self.selfplay_models.append(model)
+        if len(self.selfplay_models) > max_pool:
+            # conservar el mas viejo (companero ~random, fuerza solo) y podar el 2do
+            self.selfplay_models.pop(1)
+        if self._requested.get("self_play", 0) > 0:
+            self.weights = dict(self._requested)
+            self._recompute()
 
     def _recompute(self):
         self._kinds = list(self.weights.keys())
@@ -88,6 +107,7 @@ class PartnerPopulation:
 
     def set_weights(self, weights: dict):
         """Cambia los pesos en caliente (para curriculum). Redistribuye self_play si no hay modelos."""
+        self._requested = dict(weights)
         self.weights = dict(weights)
         if not self.selfplay_models and self.weights.get("self_play", 0) > 0:
             self.weights["greedy"] = self.weights.get("greedy", 0) + self.weights["self_play"]

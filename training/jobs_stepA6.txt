@@ -1,0 +1,5 @@
+# STEP A-3: dos soluciones nuevas contra el 0-vs-random
+# M3: BC warm-start desde el planner + PPO solo_heavy (zigzag, mejor blanco)
+custom_zigzag_kitchen | configs/layouts/custom_zigzag_kitchen.layout | 300 | 8000000 | --partner solo_heavy --anneal-frac 0.8 --bc-data data/bc/custom_zigzag_kitchen.npz --bc-epochs 8
+# M4: self-play FCP-lite (custom_room, 2do mejor blanco)
+custom_room | configs/layouts/custom_room.layout | 300 | 8000000 | --selfplay --anneal-frac 0.8

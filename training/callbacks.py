@@ -71,6 +71,42 @@ class PartnerCurriculumCallback(BaseCallback):
         return True
 
 
+class SelfPlaySnapshotCallback(BaseCallback):
+    """FCP-lite: guarda snapshots congelados del propio agente y los agrega a la
+    poblacion de companeros de TODOS los envs (via env_method con el path).
+
+    Los snapshots tempranos son ~aleatorios (companero inutil -> fuerza a soloear);
+    los tardios cooperan -> espectro continuo de calidad de companero (STEP A-3, M4).
+    """
+    def __init__(self, every_steps: int, pool_dir: str, max_pool: int = 6, verbose=1):
+        super().__init__(verbose)
+        self.every_steps = int(every_steps)
+        self.pool_dir = Path(pool_dir)
+        self.max_pool = max_pool
+        self._last_snap = None
+
+    def _snapshot(self):
+        self.pool_dir.mkdir(parents=True, exist_ok=True)
+        path = self.pool_dir / f"snap_{self.num_timesteps}.zip"
+        self.model.save(str(path))
+        try:
+            self.training_env.env_method("add_selfplay_checkpoint", str(path))
+            if self.verbose:
+                print(f"[selfplay] snapshot añadido al pool: {path.name}")
+        except Exception as exc:
+            if self.verbose:
+                print(f"[selfplay] no se pudo difundir el snapshot: {exc!r}")
+        self._last_snap = self.num_timesteps
+
+    def _on_training_start(self) -> None:
+        self._snapshot()   # snap inicial (politica ~aleatoria = companero inutil)
+
+    def _on_step(self) -> bool:
+        if self._last_snap is None or self.num_timesteps - self._last_snap >= self.every_steps:
+            self._snapshot()
+        return True
+
+
 class OfficialScoreEvalCallback(BaseCallback):
     def __init__(self, eval_env_config: dict, out_dir: str, eval_freq: int = 100000,
                  n_eval_episodes: int = 6, verbose=1):

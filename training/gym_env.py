@@ -59,6 +59,12 @@ class SingleAgentOvercooked(gym.Env):
     def set_partner_weights(self, weights: dict):
         self.population.set_weights(weights)
 
+    # --- checkpoint de self-play difundido por callback (FCP-lite) ---
+    def add_selfplay_checkpoint(self, path: str):
+        # el path es picklable -> funciona via env_method con SubprocVecEnv;
+        # cada worker carga su propia copia congelada en CPU.
+        self.population.add_selfplay_path(path)
+
     def _encode(self, state, idx) -> np.ndarray:
         enc = self.mdp.lossless_state_encoding(state)[idx]
         return np.ascontiguousarray(np.asarray(enc, dtype=np.float32).transpose(2, 0, 1))
