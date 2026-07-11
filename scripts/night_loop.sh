@@ -55,10 +55,30 @@ fase_ppo() {
   run_gate G8                 # re-evaluar con los modelos habilitados
 }
 
+fase_auto() {
+  # Autonomo completo: submitea el array, espera a que termine y corre G6/G7/G8.
+  echo "=== [auto] submit entrenamiento A100 ==="
+  local jid
+  jid=$(sbatch --parsable sbatch/train/run_train_ppo.sh 2>/dev/null || true)
+  if [ -z "$jid" ]; then echo "sbatch fallo (sin SLURM?). Abortando auto."; return 1; fi
+  echo "=== [auto] array job $jid submiteado. Esperando... ==="
+  # Poll cada 3 min hasta que no queden tareas del array (max ~8h de seguridad).
+  local iters=0
+  while squeue -j "$jid" -h -o "%T" 2>/dev/null | grep -qE "PENDING|RUNNING|CONFIGURING"; do
+    echo "[auto] $(date '+%F %T') aun en cola/corriendo:"; squeue -j "$jid" -h -o "  %.12i %.8T %R" 2>/dev/null | head
+    iters=$((iters + 1))
+    if [ "$iters" -gt 160 ]; then echo "[auto] timeout de espera (8h). Corriendo gates con lo que haya."; break; fi
+    sleep 180
+  done
+  echo "=== [auto] entrenamiento terminado. Corriendo gates PPO ==="
+  fase_ppo
+}
+
 case "$FASE" in
   cpu)   fase_cpu ;;
   train) fase_train ;;
   ppo)   fase_ppo ;;
+  auto)  fase_auto ;;
   all)   fase_cpu; fase_train ;;
   *) echo "FASE desconocida: $FASE"; exit 1 ;;
 esac
