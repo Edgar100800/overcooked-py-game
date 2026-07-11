@@ -116,4 +116,22 @@ robusto (4-8 sopas/layout, <0.1ms, 0 timeouts) en TODOS los escenarios incl. 5-6
 desconocidos. El PPO quedo entrenado y evaluado pero no habilitado por no superar al
 planner (el fusible anti-regresion funciono).
 
+## 🏆 G8 PASS con PPO ACTIVO — primer modelo robusto habilitado (2026-07-11)
+
+Tras 19 entrenamientos (population, greedy, greedy_heavy, solo_heavy, curriculum, BC
+warm-start, self-play FCP-lite), el hallazgo: NINGUNA receta de entrenamiento retiene la
+habilidad de soloear en evaluacion determinista (todas dan 0 vs random_motion; el clon BC
+con acc 0.992 la pierde por covariate shift y el PPO la olvida).
+
+**Solucion ganadora: sonda de cooperacion en el StudentAgent** (ad-hoc teaming, PLAN §15):
+planner hasta que el companero sostenga un objeto; PPO desde entonces. random/stay jamas
+sostienen -> planner completo (= score del planner); greedy lo hace en ~5 pasos -> PPO.
+
+- Habilitado: custom_zigzag M3 (BC warm-start del planner + PPO solo_heavy 8M, seed300).
+- enable-check: greedy 70286 vs planner 36287 (+94%) | eps 47410 vs 41879 | random = planner.
+- **G8 FINAL: PASS 18/18 celdas con PPO activo** (+34000 pts sobre el planner en la celda
+  zigzag-vs-greedy). El selector nunca empeora al planner en ninguna celda.
+- Backlog en curso (BC custom_room, selfplay zigzag, BC dual_pots) puede habilitar mas
+  layouts con el mismo mecanismo.
+
 <!-- Las entradas de gate se agregan debajo a medida que run_gate.py los ejecuta -->

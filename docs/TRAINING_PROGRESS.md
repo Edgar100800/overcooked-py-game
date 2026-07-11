@@ -1,6 +1,17 @@
 # Avance de entrenamientos PPO — Overcooked
 
-Estado consolidado de todos los entrenamientos y sus resultados. Actualizado 2026-07-11.
+Estado consolidado de todos los entrenamientos y sus resultados. Actualizado 2026-07-11 (2ª ed.).
+
+> ## 🏆 HITO: primer PPO robusto HABILITADO (custom_zigzag, M3 BC)
+> **G8 PASS 18/18 con PPO activo.** La clave NO fue más entrenamiento sino la **sonda de
+> cooperación** en el StudentAgent (ad-hoc teaming, PLAN §15): planner hasta que el
+> compañero sostenga un objeto (greedy lo hace en ~5 pasos → PPO el resto; random/stay
+> jamás → planner todo el episodio). Resultado en zigzag:
+> greedy **70286 vs planner 36287 (+94%)** · eps 47410 vs 41879 · random 50425 = planner.
+> Hallazgo científico: ni BC (acc 0.992) ni 60% de compañeros no-cooperativos retienen la
+> habilidad solo tras 8M de PPO (covariate shift + olvido catastrófico) — TODOS los modelos
+> dan 0 vs random en evaluación determinista. El muro se rompió por construcción (selector),
+> no por fuerza bruta.
 
 > **Verdad = env.** Todos los scores son con el score oficial de la competencia
 > (`10000·sopas + timing − timeouts`) en `gate_seeds`, con y sin swap. `~Ns` = nº de sopas.
@@ -68,8 +79,16 @@ del enable-check vs los 3 compañeros.
 | custom_room | 101 | greedy_heavy | 8M | 50177 | ❌ | gana greedy+eps, **solo 0 vs random** |
 | custom_dual_pots | 100 | greedy_heavy | 8M | 60377 | ❌ | gana greedy(8s!), 0 vs random |
 | **custom_zigzag** | 100 | greedy_heavy | 8M | 50289 | ❌ | **gana greedy+eps, solo 0 vs random** |
-| custom_zigzag | 200 | **solo_heavy** | 8M | ⏳ | ⏳ | corriendo (n004) |
-| custom_dual_pots | 200 | **curriculum** | 8M | ⏳ | ⏳ | corriendo (n005) |
+| custom_zigzag | 200 | solo_heavy | 8M | 50273 | ✅* | robusto CON sonda (60443/50614/=) |
+| custom_dual_pots | 200 | curriculum | 8M | 60193 | ❌ | gana greedy, pierde eps |
+| **custom_zigzag** | **300** | **M3 BC+solo_heavy** | 8M | **50412** | **✅ HABILITADO** | **70286/47410/= con sonda → G8 PASS** |
+| custom_room | 300 | M4 self-play | 8M | 46961 | ❌ | pool 13 snaps; flojo vs greedy con sonda |
+| custom_zigzag | 302 | curriculum | 8M | 50273 | ❌ | pierde eps por poco |
+| custom_room | 301 | M3 BC (backlog) | 8M | ⏳ | ⏳ | corriendo (n006) |
+| custom_zigzag | 301 | M4 self-play (backlog) | 8M | ⏳ | ⏳ | corriendo (ag001) |
+| custom_dual_pots | 300 | M3 BC (backlog) | 6M | ⏳ | ⏳ | corriendo (n005) |
+
+*✅ con la sonda de cooperación activa (default del StudentAgent desde 2026-07-11).
 
 ---
 
