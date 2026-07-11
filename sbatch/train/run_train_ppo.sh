@@ -3,11 +3,11 @@
 #SBATCH --partition=gpu
 #SBATCH --account=tesis
 #SBATCH --qos=a-tesis
-#SBATCH --gres=gpu:a100_1g.5gb:1
-#SBATCH --cpus-per-task=12
-#SBATCH --mem=32G
+#SBATCH --gres=shard:a100_1g.5gb:1
+#SBATCH --cpus-per-task=10
+#SBATCH --mem=24G
 #SBATCH --time=12:00:00
-#SBATCH --array=0-6
+#SBATCH --array=0-2
 #SBATCH --output=logs/ppo-%A_%a.out
 #SBATCH --error=logs/ppo-%A_%a.err
 #SBATCH --mail-type=END,FAIL
@@ -23,7 +23,10 @@
 #   # (hay 2x a100_1g.5gb pero 32 shards). Overcooked casi no usa la GPU:
 #   sbatch --gres=shard:a100_1g.5gb:1 sbatch/train/run_train_ppo.sh
 #
-# Restriccion CPU: n_jobs_concurrentes x N_ENVS <= 128 cores de ag001.
+# Limites del QOS a-tesis (sacctmgr show qos a-tesis): MaxSubmit=5, MaxJobs=3 (corriendo),
+# cpu<=32 total. Por eso: array 0-2 (3 jobs), cpus-per-task=10 (3x10=30<=32), shards MPS
+# (2 rebanadas MIG 1g.5gb dedicadas no alcanzan para 3 jobs; 32 shards si). Para mas
+# layouts, correr en tandas (jobs.txt tiene 7 lineas; --array=3-5 en una 2da tanda).
 
 set -eo pipefail
 cd "${SLURM_SUBMIT_DIR:-$(pwd)}"
