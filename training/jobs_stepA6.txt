@@ -10,3 +10,5 @@ custom_room | configs/layouts/custom_room.layout | 301 | 8000000 | --partner sol
 custom_zigzag_kitchen | configs/layouts/custom_zigzag_kitchen.layout | 301 | 8000000 | --selfplay --anneal-frac 0.8
 # idx4: M3 en dual_pots
 custom_dual_pots | configs/layouts/custom_dual_pots.layout | 300 | 6000000 | --partner solo_heavy --anneal-frac 0.8 --bc-data data/bc/custom_dual_pots.npz --bc-epochs 8
+# idx5: curriculum en zigzag (variante A-2 en el mejor blanco)
+custom_zigzag_kitchen | configs/layouts/custom_zigzag_kitchen.layout | 302 | 8000000 | --curriculum --anneal-frac 0.8
