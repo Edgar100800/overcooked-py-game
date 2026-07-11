@@ -1,0 +1,5 @@
+{
+  "_comment": "PLAN.md §10.2. dev_seeds: visibles para iterar. gate_seeds: SOLO para aprobar gates (prohibido entrenar/ajustar con ellos). Este archivo se congela al pasar G1.",
+  "dev_seeds": [0, 1, 2, 3, 4],
+  "gate_seeds": [1000, 1001, 1002, 1003, 1004]
+}

@@ -1,0 +1,10 @@
+# Dependencias de RL (FASE 3 del PLAN.md). Se instalan sobre requirements.txt
+# (que trae overcooked-ai + numpy<2). Mantener numpy<2: SB3/gymnasium lo respetan.
+#
+# torch NO va aqui: lo instala scripts/setup_venv.sh explicitamente con el indice
+# cu118 (A100/ag001). Ponerlo aqui sin version haria que pip lo reinstale a la
+# ultima (cu13) encima del cu118.
+stable-baselines3>=2.0
+gymnasium>=0.29
+tensorboard
+cloudpickle

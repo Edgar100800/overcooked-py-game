@@ -30,3 +30,8 @@ entrega_overcooked_lista/
 # Local/private metadata
 integrantes.txt
 
+
+# Modelos entrenados (grandes; se versiona el config al lado, no el .zip)
+models/
+# codegraph local index
+.codegraph/

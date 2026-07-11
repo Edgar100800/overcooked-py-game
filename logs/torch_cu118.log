@@ -1,0 +1,150 @@
+Looking in indexes: https://download.pytorch.org/whl/cu118
+Collecting torch
+  Using cached torch-2.7.1%2Bcu118-cp310-cp310-manylinux_2_28_x86_64.whl.metadata (28 kB)
+Collecting filelock (from torch)
+  Using cached filelock-3.29.0-py3-none-any.whl.metadata (2.0 kB)
+Collecting typing-extensions>=4.10.0 (from torch)
+  Using cached typing_extensions-4.15.0-py3-none-any.whl.metadata (3.3 kB)
+Collecting sympy>=1.13.3 (from torch)
+  Using cached sympy-1.14.0-py3-none-any.whl.metadata (12 kB)
+Collecting networkx (from torch)
+  Using cached networkx-3.4.2-py3-none-any.whl.metadata (6.3 kB)
+Collecting jinja2 (from torch)
+  Using cached jinja2-3.1.6-py3-none-any.whl.metadata (2.9 kB)
+Collecting fsspec (from torch)
+  Using cached fsspec-2026.4.0-py3-none-any.whl.metadata (10 kB)
+Collecting nvidia-cuda-nvrtc-cu11==11.8.89 (from torch)
+  Using cached nvidia_cuda_nvrtc_cu11-11.8.89-py3-none-manylinux1_x86_64.whl (23.2 MB)
+Collecting nvidia-cuda-runtime-cu11==11.8.89 (from torch)
+  Using cached nvidia_cuda_runtime_cu11-11.8.89-py3-none-manylinux1_x86_64.whl (875 kB)
+Collecting nvidia-cuda-cupti-cu11==11.8.87 (from torch)
+  Using cached nvidia_cuda_cupti_cu11-11.8.87-py3-none-manylinux1_x86_64.whl (13.1 MB)
+Collecting nvidia-cudnn-cu11==9.1.0.70 (from torch)
+  Using cached nvidia_cudnn_cu11-9.1.0.70-py3-none-manylinux2014_x86_64.whl (663.9 MB)
+Collecting nvidia-cublas-cu11==11.11.3.6 (from torch)
+  Using cached nvidia_cublas_cu11-11.11.3.6-py3-none-manylinux1_x86_64.whl (417.9 MB)
+Collecting nvidia-cufft-cu11==10.9.0.58 (from torch)
+  Using cached nvidia_cufft_cu11-10.9.0.58-py3-none-manylinux1_x86_64.whl (168.4 MB)
+Collecting nvidia-curand-cu11==10.3.0.86 (from torch)
+  Using cached nvidia_curand_cu11-10.3.0.86-py3-none-manylinux1_x86_64.whl (58.1 MB)
+Collecting nvidia-cusolver-cu11==11.4.1.48 (from torch)
+  Using cached nvidia_cusolver_cu11-11.4.1.48-py3-none-manylinux1_x86_64.whl (128.2 MB)
+Collecting nvidia-cusparse-cu11==11.7.5.86 (from torch)
+  Using cached nvidia_cusparse_cu11-11.7.5.86-py3-none-manylinux1_x86_64.whl (204.1 MB)
+Collecting nvidia-nccl-cu11==2.21.5 (from torch)
+  Using cached nvidia_nccl_cu11-2.21.5-py3-none-manylinux2014_x86_64.whl (147.8 MB)
+Collecting nvidia-nvtx-cu11==11.8.86 (from torch)
+  Using cached nvidia_nvtx_cu11-11.8.86-py3-none-manylinux1_x86_64.whl (99 kB)
+Collecting triton==3.3.1 (from torch)
+  Using cached triton-3.3.1-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (1.5 kB)
+Collecting setuptools>=40.8.0 (from triton==3.3.1->torch)
+  Downloading setuptools-78.1.0-py3-none-any.whl.metadata (6.6 kB)
+Collecting mpmath<1.4,>=1.1.0 (from sympy>=1.13.3->torch)
+  Using cached mpmath-1.3.0-py3-none-any.whl.metadata (8.6 kB)
+Collecting MarkupSafe>=2.0 (from jinja2->torch)
+  Using cached markupsafe-3.0.3-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.7 kB)
+Using cached torch-2.7.1%2Bcu118-cp310-cp310-manylinux_2_28_x86_64.whl (905.3 MB)
+Using cached triton-3.3.1-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (155.6 MB)
+Downloading setuptools-78.1.0-py3-none-any.whl (1.3 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 82.6 MB/s  0:00:00
+Using cached sympy-1.14.0-py3-none-any.whl (6.3 MB)
+Using cached mpmath-1.3.0-py3-none-any.whl (536 kB)
+Using cached typing_extensions-4.15.0-py3-none-any.whl (44 kB)
+Using cached filelock-3.29.0-py3-none-any.whl (39 kB)
+Using cached fsspec-2026.4.0-py3-none-any.whl (203 kB)
+Using cached jinja2-3.1.6-py3-none-any.whl (134 kB)
+Using cached markupsafe-3.0.3-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (20 kB)
+Using cached networkx-3.4.2-py3-none-any.whl (1.7 MB)
+Installing collected packages: mpmath, typing-extensions, sympy, setuptools, nvidia-nvtx-cu11, nvidia-nccl-cu11, nvidia-cusparse-cu11, nvidia-curand-cu11, nvidia-cufft-cu11, nvidia-cuda-runtime-cu11, nvidia-cuda-nvrtc-cu11, nvidia-cuda-cupti-cu11, nvidia-cublas-cu11, networkx, MarkupSafe, fsspec, filelock, triton, nvidia-cusolver-cu11, nvidia-cudnn-cu11, jinja2, torch
+  Attempting uninstall: mpmath
+    Found existing installation: mpmath 1.3.0
+    Uninstalling mpmath-1.3.0:
+      Successfully uninstalled mpmath-1.3.0
+  Attempting uninstall: typing-extensions
+    Found existing installation: typing_extensions 4.15.0
+    Uninstalling typing_extensions-4.15.0:
+      Successfully uninstalled typing_extensions-4.15.0
+  Attempting uninstall: sympy
+    Found existing installation: sympy 1.14.0
+    Uninstalling sympy-1.14.0:
+      Successfully uninstalled sympy-1.14.0
+  Attempting uninstall: setuptools
+    Found existing installation: setuptools 83.0.0
+    Uninstalling setuptools-83.0.0:
+      Successfully uninstalled setuptools-83.0.0
+  Attempting uninstall: nvidia-nvtx-cu11
+    Found existing installation: nvidia-nvtx-cu11 11.8.86
+    Uninstalling nvidia-nvtx-cu11-11.8.86:
+      Successfully uninstalled nvidia-nvtx-cu11-11.8.86
+  Attempting uninstall: nvidia-nccl-cu11
+    Found existing installation: nvidia-nccl-cu11 2.21.5
+    Uninstalling nvidia-nccl-cu11-2.21.5:
+      Successfully uninstalled nvidia-nccl-cu11-2.21.5
+  Attempting uninstall: nvidia-cusparse-cu11
+    Found existing installation: nvidia-cusparse-cu11 11.7.5.86
+    Uninstalling nvidia-cusparse-cu11-11.7.5.86:
+      Successfully uninstalled nvidia-cusparse-cu11-11.7.5.86
+  Attempting uninstall: nvidia-curand-cu11
+    Found existing installation: nvidia-curand-cu11 10.3.0.86
+    Uninstalling nvidia-curand-cu11-10.3.0.86:
+      Successfully uninstalled nvidia-curand-cu11-10.3.0.86
+  Attempting uninstall: nvidia-cufft-cu11
+    Found existing installation: nvidia-cufft-cu11 10.9.0.58
+    Uninstalling nvidia-cufft-cu11-10.9.0.58:
+      Successfully uninstalled nvidia-cufft-cu11-10.9.0.58
+  Attempting uninstall: nvidia-cuda-runtime-cu11
+    Found existing installation: nvidia-cuda-runtime-cu11 11.8.89
+    Uninstalling nvidia-cuda-runtime-cu11-11.8.89:
+      Successfully uninstalled nvidia-cuda-runtime-cu11-11.8.89
+  Attempting uninstall: nvidia-cuda-nvrtc-cu11
+    Found existing installation: nvidia-cuda-nvrtc-cu11 11.8.89
+    Uninstalling nvidia-cuda-nvrtc-cu11-11.8.89:
+      Successfully uninstalled nvidia-cuda-nvrtc-cu11-11.8.89
+  Attempting uninstall: nvidia-cuda-cupti-cu11
+    Found existing installation: nvidia-cuda-cupti-cu11 11.8.87
+    Uninstalling nvidia-cuda-cupti-cu11-11.8.87:
+      Successfully uninstalled nvidia-cuda-cupti-cu11-11.8.87
+  Attempting uninstall: nvidia-cublas-cu11
+    Found existing installation: nvidia-cublas-cu11 11.11.3.6
+    Uninstalling nvidia-cublas-cu11-11.11.3.6:
+      Successfully uninstalled nvidia-cublas-cu11-11.11.3.6
+  Attempting uninstall: networkx
+    Found existing installation: networkx 3.4.2
+    Uninstalling networkx-3.4.2:
+      Successfully uninstalled networkx-3.4.2
+  Attempting uninstall: MarkupSafe
+    Found existing installation: MarkupSafe 3.0.3
+    Uninstalling MarkupSafe-3.0.3:
+      Successfully uninstalled MarkupSafe-3.0.3
+  Attempting uninstall: fsspec
+    Found existing installation: fsspec 2026.4.0
+    Uninstalling fsspec-2026.4.0:
+      Successfully uninstalled fsspec-2026.4.0
+  Attempting uninstall: filelock
+    Found existing installation: filelock 3.29.0
+    Uninstalling filelock-3.29.0:
+      Successfully uninstalled filelock-3.29.0
+  Attempting uninstall: triton
+    Found existing installation: triton 3.7.1
+    Uninstalling triton-3.7.1:
+      Successfully uninstalled triton-3.7.1
+  Attempting uninstall: nvidia-cusolver-cu11
+    Found existing installation: nvidia-cusolver-cu11 11.4.1.48
+    Uninstalling nvidia-cusolver-cu11-11.4.1.48:
+      Successfully uninstalled nvidia-cusolver-cu11-11.4.1.48
+  Attempting uninstall: nvidia-cudnn-cu11
+    Found existing installation: nvidia-cudnn-cu11 9.1.0.70
+    Uninstalling nvidia-cudnn-cu11-9.1.0.70:
+      Successfully uninstalled nvidia-cudnn-cu11-9.1.0.70
+  Attempting uninstall: jinja2
+    Found existing installation: Jinja2 3.1.6
+    Uninstalling Jinja2-3.1.6:
+      Successfully uninstalled Jinja2-3.1.6
+  Attempting uninstall: torch
+    Found existing installation: torch 2.13.0
+    Uninstalling torch-2.13.0:
+      Successfully uninstalled torch-2.13.0
+
+ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+stable-baselines3 2.9.0 requires torch<3.0,>=2.8, but you have torch 2.7.1+cu118 which is incompatible.
+Successfully installed MarkupSafe-3.0.3 filelock-3.29.0 fsspec-2026.4.0 jinja2-3.1.6 mpmath-1.3.0 networkx-3.4.2 nvidia-cublas-cu11-11.11.3.6 nvidia-cuda-cupti-cu11-11.8.87 nvidia-cuda-nvrtc-cu11-11.8.89 nvidia-cuda-runtime-cu11-11.8.89 nvidia-cudnn-cu11-9.1.0.70 nvidia-cufft-cu11-10.9.0.58 nvidia-curand-cu11-10.3.0.86 nvidia-cusolver-cu11-11.4.1.48 nvidia-cusparse-cu11-11.7.5.86 nvidia-nccl-cu11-2.21.5 nvidia-nvtx-cu11-11.8.86 setuptools-78.1.0 sympy-1.14.0 torch-2.7.1+cu118 triton-3.3.1 typing-extensions-4.15.0
