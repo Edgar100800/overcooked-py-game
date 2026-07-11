@@ -1,0 +1,2 @@
+# custom_zigzag: el planner es DEBIL aqui (3.5 sopas) -> mejor blanco para superarlo robustamente
+custom_zigzag_kitchen | configs/layouts/custom_zigzag_kitchen.layout | 100 | 8000000 | --partner greedy_heavy --anneal-frac 0.8
