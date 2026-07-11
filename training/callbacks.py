@@ -81,6 +81,9 @@ class OfficialScoreEvalCallback(BaseCallback):
             if self.verbose:
                 print(f"[eval] step={self.num_timesteps} official_score={score:.1f} "
                       f"(best={self.best_score:.1f})")
+            # last.zip SIEMPRE (resiliencia: si un SIGKILL mata el job cerca del final,
+            # no se pierde progreso; ver ADDENDUM del plan sobre el fallo del job 46045).
+            self.model.save(str(self.out_dir / "last.zip"))
             if score > self.best_score:
                 self.best_score = score
                 self.model.save(str(self.out_dir / "best.zip"))

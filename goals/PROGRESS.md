@@ -75,4 +75,45 @@ entrega funcional esta GARANTIZADA (selector = planner robusto en cualquier layo
    los que superen al planner) + re-evalua G8.
 3. `sbatch sbatch/eval/run_gate.sh G8` como verificacion final de la entrega.
 
+## Entrenamiento real A100 (job 46045) — 3 modelos, 1 fallo de infra
+
+Array de 3 tasks x 5M steps en ag001 (shards MPS). Task 0 COMPLETED (5M); tasks 1,2
+FAILED por **SIGKILL (0:9)** a 4.8M/4.6M, 1 s despues de que la task 0 termino. Los 3
+`best.zip` quedaron intactos (40537 / 40550 / 33527).
+
+**Causa raiz:** NO fue OOM (RSS 3.2GB de 24GB) ni error de codigo (sin traceback). Las 3
+tasks compartian UN MIG 1g.5gb via shards MPS; al terminar la task 0, el epilog de
+limpieza del nodo (`/etc/slurm/slurm.epilog.clean`) tiro el servidor MPS compartido y
+mato a las otras. Es la fragilidad conocida de varios jobs concurrentes sobre una GPU
+compartida por MPS. (Detalle completo en el ADDENDUM del plan.)
+
+**Fix aplicado:** entrenamiento en **CPU** por defecto (Overcooked es CPU-bound, el CNN
+es diminuto -> misma velocidad; elimina toda la clase de fallos MPS/epilog). sbatch ->
+`--partition=standard --device cpu` (validado: job de prueba COMPLETED en n003).
+Alternativa A100 documentada: rebanadas MIG DEDICADAS + `--array=..%2`. Ademas
+`callbacks.py` ahora guarda `last.zip` en cada eval (resiliencia ante SIGKILL).
+
+## G6 — PASS (2026-07-11, modelos reales 5M)
+- cramped_room (seed1, 40550): 6.0 sopas vs greedy, p99 1.06ms.
+- asymmetric_advantages (seed0, 33527): 3.0 sopas vs greedy, p99 1.19ms.
+Los modelos PPO reales SI aprenden a entregar sopas (mucho mejor que el smoke).
+
+## G7 — decision "planner" (2026-07-11, modelos reales 5M)
+El planner robusto SIGUE ganando, sobre todo en el rol invertido (swap):
+- cramped_room: sin swap PPO 60271 ~= planner 60221 (gana por poco); CON swap PPO 60310
+  < planner 70374. No supera en ambos roles -> no habilita.
+- asymmetric: sin swap PPO 60471 < planner 80431; CON swap PPO 0 (no aprendio player-1)
+  < planner 50426. No habilita.
+Decision valida (PLAN §11 G7): selector queda en planner. Ningun `enabled` escrito.
+Mejora futura: mas steps / tecnicas de rol (el PPO flojea como player-1 en swap).
+
+## G8 — PASS FINAL (2026-07-11)
+Selector (modo planner, ningun PPO habilitado) en 6 layouts x {greedy, greedy_eps,
+random_motion} x swap = 18 celdas, 0 FAIL, 0 timeouts, 0 invalidas. **ENTREGA VALIDADA.**
+
+**RESUMEN FINAL:** G0-G6 PASS, G7 = "planner" (valido), G8 PASS. La entrega es el planner
+robusto (4-8 sopas/layout, <0.1ms, 0 timeouts) en TODOS los escenarios incl. 5-6
+desconocidos. El PPO quedo entrenado y evaluado pero no habilitado por no superar al
+planner (el fusible anti-regresion funciono).
+
 <!-- Las entradas de gate se agregan debajo a medida que run_gate.py los ejecuta -->
