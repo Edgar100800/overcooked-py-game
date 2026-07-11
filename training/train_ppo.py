@@ -90,6 +90,10 @@ def main():
     ap.add_argument("--eval-freq", type=int, default=200_000)
     ap.add_argument("--horizon", type=int, default=200, help="horizon de ENTRENAMIENTO")
     ap.add_argument("--no-subproc", action="store_true")
+    ap.add_argument("--partner", default="population", choices=["population", "greedy"],
+                    help="greedy = companero greedy FIJO 100% (§12-C.3, layouts dificiles)")
+    ap.add_argument("--no-anneal", action="store_true",
+                    help="shaping fijo 1.0 sin annealing (§12-C.1)")
     args = ap.parse_args()
 
     # 1 hilo por worker (CPU-bound, evitar sobre-suscripcion) - antes de importar torch pesado
@@ -108,7 +112,8 @@ def main():
                   "old_dynamics": True}
     eval_env_config = dict(env_config)
 
-    venv = make_vec_env(env_config, args.n_envs, partner_weights=None,
+    partner_weights = {"greedy": 1.0} if args.partner == "greedy" else None
+    venv = make_vec_env(env_config, args.n_envs, partner_weights=partner_weights,
                         seed=args.seed, use_subproc=not args.no_subproc)
     venv = VecMonitor(venv)
 
@@ -116,10 +121,10 @@ def main():
                       n_steps=args.n_steps, lr=args.lr, ent_coef=args.ent_coef,
                       tb=str(out / "tb"), verbose=1)
 
-    callbacks = [
-        ShapingAnnealCallback(args.timesteps, args.anneal_frac),
-        OfficialScoreEvalCallback(eval_env_config, str(out), eval_freq=args.eval_freq),
-    ]
+    callbacks = [OfficialScoreEvalCallback(eval_env_config, str(out), eval_freq=args.eval_freq)]
+    if not args.no_anneal:
+        callbacks.insert(0, ShapingAnnealCallback(args.timesteps, args.anneal_frac))
+    # con --no-anneal el coef queda en initial_coef=1.0 (env) todo el entrenamiento
 
     # Config versionado junto al modelo (PLAN §16.2)
     (out / "train_config.json").write_text(json.dumps(vars(args), indent=2))
