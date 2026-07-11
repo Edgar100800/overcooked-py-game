@@ -61,6 +61,12 @@ class StudentAgent:
         self.model = None
         self.model_layout = None
         self._fused = False
+        # Sonda de cooperacion (ad-hoc teaming, PLAN §15/HAHA): el PPO solo se usa si el
+        # companero demostro cooperar (sostuvo un objeto alguna vez en el episodio).
+        # random_motion/stay JAMAS sostienen nada -> planner todo el episodio (robusto);
+        # greedy agarra una cebolla en ~5 pasos -> PPO el resto. Desactivable via config.
+        self.partner_probe = bool(config.get("partner_probe", True))
+        self._partner_cooperative = False
         # require_enabled=False permite a G6/G7 evaluar un modelo candidato ANTES de
         # habilitarlo. En despliegue normal queda True (anti-regresion §12-E.2).
         self.require_enabled = bool(config.get("require_enabled", True))
@@ -95,11 +101,25 @@ class StudentAgent:
     def reset(self):
         self.planner.reset()
         self._fused = False
+        self._partner_cooperative = False
 
     def act(self, obs) -> int:
         # Camino planner si: forzado, sin modelo, o fusible disparado.
         if self.force_planner or self.model is None or self._fused:
             return self._planner_act(obs)
+
+        # Sonda de cooperacion: hasta que el companero sostenga un objeto, planner.
+        if self.partner_probe and not self._partner_cooperative:
+            try:
+                state = obs["state"]
+                idx = int(obs.get("agent_index", 0))
+                partner = state.players[1 - idx]
+                if partner.held_object is not None:
+                    self._partner_cooperative = True   # coopera -> PPO desde ahora
+            except Exception:
+                pass
+            if not self._partner_cooperative:
+                return self._planner_act(obs)
 
         try:
             t0 = time.perf_counter()
