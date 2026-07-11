@@ -44,14 +44,14 @@
     "timestamp": "20260711_012030"
   },
   "G2": {
-    "artifact_dir": "outputs/gates/G2_20260711_005619",
+    "artifact_dir": "outputs/gates/G2_20260711_012335",
     "metric": {
       "per_cell": {
         "G2/cramped_room/planner-vs-stay": {
           "invalids": 0,
-          "latency_max": 0.14119409024715424,
-          "latency_p50": 0.04671560600399971,
-          "latency_p99": 0.08690400980412956,
+          "latency_max": 0.5319816991686821,
+          "latency_p50": 0.04619196988642216,
+          "latency_p99": 0.06878693588078016,
           "mean_score": 25315.0,
           "mean_soups": 2.5,
           "min_soups": 0.0,
@@ -63,7 +63,7 @@
       "verify_ok": true
     },
     "passed": true,
-    "timestamp": "20260711_005620"
+    "timestamp": "20260711_012335"
   },
   "G3": {
     "artifact_dir": "outputs/gates/G3_20260711_005635",
