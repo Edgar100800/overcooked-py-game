@@ -1,13 +1,13 @@
 {
   "G0": {
-    "artifact_dir": "outputs/gates/G0_20260711_005619",
+    "artifact_dir": "outputs/gates/G0_20260711_012335",
     "metric": {
       "per_cell": {
         "G0/cramped_room/greedy-vs-stay": {
           "invalids": 0,
-          "latency_max": 0.48425374552607536,
-          "latency_p50": 0.03531621769070625,
-          "latency_p99": 0.07365438155829906,
+          "latency_max": 0.4632449708878994,
+          "latency_p50": 0.03567943349480629,
+          "latency_p99": 0.05454450845718384,
           "mean_score": 12310.0,
           "mean_soups": 1.0,
           "min_soups": 1.0,
@@ -19,7 +19,7 @@
       "verify_ok": true
     },
     "passed": true,
-    "timestamp": "20260711_005619"
+    "timestamp": "20260711_012335"
   },
   "G1": {
     "artifact_dir": "outputs/gates/G1_20260711_012029",
