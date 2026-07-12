@@ -122,7 +122,7 @@ del enable-check vs los 3 compañeros.
 | custom_room | 300 | M4 self-play | 8M | 46961 | ❌ | pool 13 snaps; flojo vs greedy con sonda |
 | custom_zigzag | 302 | curriculum | 8M | 50273 | ❌ | pierde eps por poco |
 | custom_room | 301 | M3 BC (backlog) | 8M | 46961 | ❌ | pierde vs greedy (30133/60209) y eps |
-| custom_zigzag | 301 | M4 self-play (backlog) | 8M | ⏳ | ⏳ | corriendo (ag001) |
+| custom_zigzag | 301 | M4 self-play (backlog) | 8M | 60443 | ✅* | **robusto** (60443/50598/=) pero < campeon seed300 vs greedy → respaldo |
 | custom_dual_pots | 300 | M3 BC (backlog) | 6M | 60225 | ❌ | **gana greedy (65416/56073)**, pierde eps (48716/77524) |
 | rehearsal_kitchen | 400/401 | M3 BC (ensayo playbook) | 8M | ⏳ | ⏳ | corriendo (n003/n004), ensayo dia-de-competencia |
 
