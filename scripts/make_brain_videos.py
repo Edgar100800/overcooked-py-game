@@ -198,6 +198,8 @@ def main():
     ap.add_argument("--layout-file", default="configs/layouts/custom_zigzag_kitchen.layout")
     ap.add_argument("--partner", default="greedy",
                     choices=["greedy", "greedy_eps", "random_motion", "stay", "planner", "student"])
+    ap.add_argument("--model-path", default=None,
+                    help="best.zip candidato (para ver el cerebro de modelos NO habilitados)")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--fps", type=float, default=8)
     ap.add_argument("--horizon", type=int, default=250)
@@ -210,6 +212,8 @@ def main():
     out_dir.mkdir(parents=True, exist_ok=True)
 
     scfg = {"layout": args.layout, "layout_file": lf}
+    if args.model_path:
+        scfg.update({"model_path": args.model_path, "require_enabled": False})
     if args.partner == "planner":
         a1_spec = gc.planner_agent()
     elif args.partner == "student":
