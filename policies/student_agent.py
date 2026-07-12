@@ -107,6 +107,14 @@ class StudentAgent:
         # greedy agarra una cebolla en ~5 pasos -> PPO el resto. Desactivable via config.
         self.partner_probe = bool(config.get("partner_probe", True))
         self._partner_cooperative = False
+        # Watchdog anti-congelamiento del PPO (hallado en duelos PPO-vs-PPO): dos
+        # politicas deterministas que aprendieron a "esperar" al companero pueden
+        # quedar en estatua mutua para siempre. Si en `freeze_window` pasos con PPO
+        # activo ni nosotros ni el companero salimos de <=2 celdas, el episodio esta
+        # muerto -> fusible al planner (que si rompe bailes/estatuas). 40 pasos
+        # cubren de sobra la espera legitima de coccion (20 ticks).
+        self.freeze_window = int(config.get("freeze_window", 40))
+        self._ppo_window = []
         # require_enabled=False permite a G6/G7 evaluar un modelo candidato ANTES de
         # habilitarlo. En despliegue normal queda True (anti-regresion §12-E.2).
         self.require_enabled = bool(config.get("require_enabled", True))
@@ -150,6 +158,7 @@ class StudentAgent:
         self.planner.reset()
         self._fused = False
         self._partner_cooperative = False
+        self._ppo_window = []
 
     def act(self, obs) -> int:
         # Camino planner si: forzado o fusible disparado.
@@ -175,6 +184,22 @@ class StudentAgent:
                 pass
             if not self._partner_cooperative:
                 return self._planner_act(obs)
+
+        # Watchdog anti-congelamiento (solo cuenta pasos con PPO activo).
+        try:
+            state = obs["state"]
+            idx = int(obs.get("agent_index", 0))
+            self._ppo_window.append((state.players[idx].position,
+                                     state.players[1 - idx].position))
+            if len(self._ppo_window) > self.freeze_window:
+                self._ppo_window.pop(0)
+            if len(self._ppo_window) == self.freeze_window:
+                if (len({p[0] for p in self._ppo_window}) <= 2
+                        and len({p[1] for p in self._ppo_window}) <= 2):
+                    self._fused = True          # episodio muerto -> planner el resto
+                    return self._planner_act(obs)
+        except Exception:
+            pass
 
         try:
             t0 = time.perf_counter()
