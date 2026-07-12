@@ -50,6 +50,8 @@ class PlannerAgent:
         self.avoid_teammate = bool(config.get("avoid_teammate", True))
         self.stuck_threshold = int(config.get("stuck_threshold", 3))
         self.detour_len = int(config.get("detour_len", 2))
+        # ventana del detector de oscilacion (pasos navegando en <=2 celdas unicas)
+        self.osc_window = int(config.get("osc_window", 12))
         # Semilla FIJA por defecto (0): el unico componente estocastico es el desvio
         # anti-deadlock; fijarla hace al planner DETERMINISTA y reproducible (PLAN §14)
         # y garantiza que el StudentAgent en modo planner sea identico al planner puro
@@ -88,6 +90,7 @@ class PlannerAgent:
         self._onion_disp: list[tuple[int, int]] = []
         self._tomato_disp: list[tuple[int, int]] = []
         self._prev_pos: tuple[int, int] | None = None
+        self._pos_history: list[tuple[int, int]] = []
         self._stuck_counter = 0
         self._detour_steps_left = 0
         self._navigating = False
@@ -299,6 +302,21 @@ class PlannerAgent:
         else:
             self._stuck_counter = 0
         self._prev_pos = pos
+        # Oscilacion (baile A<->B): dos agentes replanificando en espejo se mueven
+        # cada paso (el contador de arriba nunca dispara) pero no avanzan. Solo
+        # cuentan pasos NAVEGANDO consecutivos (interactuar/encarar es quedarse en la
+        # misma celda legitimamente y resetea la ventana). 8 pasos navegando dentro
+        # de <=2 celdas unicas = atasco real.
+        if self._navigating:
+            w = self.osc_window
+            self._pos_history.append(pos)
+            if len(self._pos_history) > w:
+                self._pos_history.pop(0)
+            if len(self._pos_history) == w and len(set(self._pos_history)) <= 2:
+                self._stuck_counter = self.stuck_threshold   # fuerza detour
+                self._pos_history.clear()
+        else:
+            self._pos_history.clear()
 
     # --------------------------------------------------------------- geometria
     @staticmethod

@@ -31,6 +31,46 @@ from policies.planner_agent import PlannerAgent
 STAY_IDX = 4
 REPO = Path(__file__).resolve().parent.parent
 
+# Cache de modelos a nivel de MODULO: los arneses (rollout.py, el del profe) suelen
+# instanciar un StudentAgent NUEVO por episodio; sin cache, cada episodio paga la
+# carga del .zip (y el fallback por hash jamas llegaria a usar el modelo que su
+# thread cargo). Clave = (path, mtime) para invalidar si best.zip se reemplaza.
+_MODEL_CACHE: dict = {}
+_LOADING: set = set()        # paths con un thread cargador en vuelo (dedup)
+
+
+def _cache_key(path: Path):
+    return (str(path), path.stat().st_mtime)
+
+
+def _preload_all_enabled(models_dir: Path):
+    """Carga al cache TODOS los modelos habilitados con terrain.key (sincronico).
+
+    Se llama desde __init__ (fuera del SIGALRM de act(), igual que el preload
+    clasico) cuando el config no trae layout: asi el fallback por hash encuentra
+    el modelo YA cargado en el primer act() y el PPO juega desde el paso 1.
+    Costo: ~3s la primera vez por proceso (import torch); luego sub-ms (cache).
+    """
+    for marker in sorted(models_dir.glob("*/enabled")):
+        best = marker.parent / "best.zip"
+        if best.exists() and (marker.parent / "terrain.key").exists():
+            try:
+                _load_ppo_cached(best)
+            except Exception:
+                pass
+
+
+def _load_ppo_cached(path: Path):
+    key = _cache_key(path)
+    model = _MODEL_CACHE.get(key)
+    if model is None:
+        import torch
+        torch.set_num_threads(1)
+        from stable_baselines3 import PPO
+        model = PPO.load(str(path), device="cpu")
+        _MODEL_CACHE[key] = model     # los CNN son diminutos; cachear todos esta bien
+    return model
+
 
 def _layout_key(config: dict) -> str | None:
     """Clave de layout desde el config (nombre oficial o basename del .layout)."""
@@ -71,9 +111,20 @@ class StudentAgent:
         # habilitarlo. En despliegue normal queda True (anti-regresion §12-E.2).
         self.require_enabled = bool(config.get("require_enabled", True))
         self.explicit_model_path = config.get("model_path")
+        # Fallback por hash de terreno: si el arnes NO paso layout/layout_file en el
+        # config, en el primer act() se busca un modelo habilitado cuyo terrain.key
+        # coincida con el mdp observado, y se carga en un thread daemon (la carga
+        # tarda >100ms; el SIGALRM del SafeActionWrapper solo corta el main thread).
+        self.hash_fallback = bool(config.get("hash_fallback", True))
+        self._hash_tried = False
+        self._hash_path = None    # best.zip detectado por hash (el thread llena el cache)
 
         if not self.force_planner:
             self._try_preload(_layout_key(config))
+            if self.model is None and self.hash_fallback and not self.explicit_model_path:
+                # Sin layout en el config (o sin modelo para ese layout): dejar
+                # listos en cache los habilitados para el fallback por hash.
+                _preload_all_enabled(self.models_dir)
 
     # ------------------------------------------------------------------ carga
     def _try_preload(self, layout_key: str | None):
@@ -89,10 +140,7 @@ class StudentAgent:
         # Activar PPO solo si el modelo existe y (esta habilitado o es evaluacion).
         if best.exists() and enabled_ok:
             try:
-                import torch
-                torch.set_num_threads(1)
-                from stable_baselines3 import PPO
-                self.model = PPO.load(str(best), device="cpu")
+                self.model = _load_ppo_cached(best)
                 self.model_layout = layout_key or "explicit"
             except Exception:
                 self.model = None
@@ -104,9 +152,16 @@ class StudentAgent:
         self._partner_cooperative = False
 
     def act(self, obs) -> int:
-        # Camino planner si: forzado, sin modelo, o fusible disparado.
-        if self.force_planner or self.model is None or self._fused:
+        # Camino planner si: forzado o fusible disparado.
+        if self.force_planner or self._fused:
             return self._planner_act(obs)
+
+        # Sin modelo precargado: intentar el fallback por hash (no bloqueante) y
+        # jugar con el planner hasta que el thread termine la carga (si hay match).
+        if self.model is None:
+            self._maybe_hash_load(obs)
+            if self.model is None:
+                return self._planner_act(obs)
 
         # Sonda de cooperacion: hasta que el companero sostenga un objeto, planner.
         if self.partner_probe and not self._partner_cooperative:
@@ -134,6 +189,58 @@ class StudentAgent:
             return self._planner_act(obs)
 
     # --------------------------------------------------------------- internos
+    def _maybe_hash_load(self, obs):
+        """Fallback por hash de terreno (un solo intento por vida del agente).
+
+        Busca models/<key>/ con marker `enabled` y `terrain.key` == hash del mdp
+        observado; si hay match, carga el PPO en un thread daemon y mientras tanto
+        el agente sigue con el planner (la sonda de cooperacion exige planner al
+        inicio de todos modos). Cualquier excepcion -> queda en planner.
+        """
+        if self._hash_tried:
+            # ¿El thread (de esta instancia o de una anterior) ya lleno el cache?
+            if self.model is None and self._hash_path is not None:
+                try:
+                    self.model = _MODEL_CACHE.get(_cache_key(self._hash_path))
+                except Exception:
+                    pass
+            return
+        self._hash_tried = True
+        if not self.hash_fallback or self.explicit_model_path:
+            return
+        try:
+            tk = terrain_key(obs["mdp"])
+            match = None
+            for marker in self.models_dir.glob("*/enabled"):
+                kf = marker.parent / "terrain.key"
+                if (kf.exists() and kf.read_text().strip() == tk
+                        and (marker.parent / "best.zip").exists()):
+                    match = marker.parent
+                    break
+            if match is None:
+                return
+            self._hash_path = match / "best.zip"
+            self.model_layout = match.name
+            if _cache_key(self._hash_path) in _MODEL_CACHE:
+                self.model = _MODEL_CACHE[_cache_key(self._hash_path)]
+                return
+            if str(self._hash_path) in _LOADING:
+                return   # otra instancia (episodio previo) ya lo esta cargando
+            _LOADING.add(str(self._hash_path))
+            import threading
+
+            def _load(path=self._hash_path):
+                try:
+                    _load_ppo_cached(path)
+                except Exception:
+                    pass
+                finally:
+                    _LOADING.discard(str(path))
+
+            threading.Thread(target=_load, daemon=True).start()
+        except Exception:
+            pass
+
     def _planner_act(self, obs) -> int:
         try:
             return int(self.planner.act(obs))

@@ -31,6 +31,15 @@ SEEDS = json.loads((REPO / "evaluation" / "gate_seeds.json").read_text())["gate_
 PARTNERS = ["greedy", "greedy_eps", "random_motion"]
 
 
+def terrain_hash(layout, layout_file):
+    """Hash del terrain_mtx del layout (para el fallback por hash del StudentAgent)."""
+    from src.environment import build_mdp
+    from policies.student_agent import terrain_key
+    mdp = build_mdp({"layout_name": None if layout_file else layout,
+                     "layout_file": layout_file, "old_dynamics": True})
+    return terrain_key(mdp)
+
+
 def _mean_score(cfg):
     res = run_rollouts(cfg, seeds=[int(s) for s in SEEDS], swaps=[False, True],
                        test_agent_key="agent_0")
@@ -77,6 +86,12 @@ def main():
         shutil.copy(args.model, model_dir / "best.zip")
         (model_dir / "enabled").write_text(
             f"HABILITADO (robusto vs {PARTNERS}) modelo={args.model}\n{detail}\n")
+        # terrain.key: permite al StudentAgent activar este PPO aunque el config del
+        # arnes no traiga layout/layout_file (deteccion por hash del terreno).
+        try:
+            (model_dir / "terrain.key").write_text(terrain_hash(args.layout, args.layout_file) + "\n")
+        except Exception as exc:
+            print(f"[enable] aviso: no se pudo escribir terrain.key ({exc!r})")
         print(f"[enable] {key} HABILITADO: el PPO supera/iguala al planner en TODOS los companeros.")
     else:
         bad = [pk for pk, d in detail.items() if not d["ok"]]
