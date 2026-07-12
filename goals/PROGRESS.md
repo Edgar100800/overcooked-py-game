@@ -134,4 +134,31 @@ sostienen -> planner completo (= score del planner); greedy lo hace en ~5 pasos 
 - Backlog en curso (BC custom_room, selfplay zigzag, BC dual_pots) puede habilitar mas
   layouts con el mismo mecanismo.
 
+## 🏁 Preparacion dia-de-competencia — ENSAYO GENERAL EXITOSO (2026-07-12)
+
+Formato revelado por el profe: E1-E3 layouts el domingo (greedy/sticky/eps), E4 lunes
+(random_motion), E5-E6 en vivo (agente de otro grupo). Torneo por puestos. Preparacion:
+
+1. **Fallback por terrain-hash en StudentAgent**: si el arnes no pasa layout en el config,
+   se detecta por hash del terreno (`models/<key>/terrain.key`) y el PPO se activa igual
+   (cache de modelos por proceso + precarga en __init__, fuera del SIGALRM). Verificado:
+   config {} = mismo score que config completo, 0 timeouts. G8 sigue PASS 18/18.
+2. **Fix del planner (hallado por el ensayo)**: detector de oscilacion (osc_window=12) —
+   dos agentes deterministas "bailando" en espejo en un pasillo de 1 celda quedaban 0
+   sopas para siempre; ahora detour. Rehearsal 0.5→1.0 sopas vs greedy; costo neto en los
+   6 layouts: -1002 de 956k (2 celdas cambian >100, una MEJORA).
+3. **Playbook `scripts/prepare_new_layout.sh`**: .layout nuevo → baseline (aborta si
+   planner no llega a 1 sopa) → BC data → 2 seeds M3 en SLURM (elige nodo/cuenta libre,
+   1 job/nodo) → enable-check robusto → habilita → report.md. TODO automatico.
+4. **Ensayo cronometrado** en `rehearsal_kitchen` (layout inedito, corredor unico):
+   **291 min end-to-end sin intervencion** → seed400 ROBUSTO y HABILITADO:
+   greedy 50375 vs planner 10583 (**+376%**) | eps 35534 vs 17922 (+98%) | random =.
+   Con config {} (hash): 50375, identico. **El pipeline del domingo esta validado.**
+- Backlog evaluado: custom_room s301 ❌, dual_pots s300 ❌ (gana greedy, pierde eps),
+  zigzag s301 selfplay ✅ robusto pero < campeon seed300 → respaldo. Campeon intacto.
+
+Plan del domingo: `bash scripts/prepare_new_layout.sh <escenarioX>.layout` por cada
+layout revelado (~5h por layout, corren en paralelo en nodos distintos). Lunes E4:
+`python -m scripts.planner_baseline --layout-file <e4>.layout` (2 min, el planner basta).
+
 <!-- Las entradas de gate se agregan debajo a medida que run_gate.py los ejecuta -->

@@ -124,7 +124,8 @@ del enable-check vs los 3 compañeros.
 | custom_room | 301 | M3 BC (backlog) | 8M | 46961 | ❌ | pierde vs greedy (30133/60209) y eps |
 | custom_zigzag | 301 | M4 self-play (backlog) | 8M | 60443 | ✅* | **robusto** (60443/50598/=) pero < campeon seed300 vs greedy → respaldo |
 | custom_dual_pots | 300 | M3 BC (backlog) | 6M | 60225 | ❌ | **gana greedy (65416/56073)**, pierde eps (48716/77524) |
-| rehearsal_kitchen | 400/401 | M3 BC (ensayo playbook) | 8M | ⏳ | ⏳ | corriendo (n003/n004), ensayo dia-de-competencia |
+| **rehearsal_kitchen** | **400** | **M3 BC (ensayo playbook)** | 8M | 40331 | **✅ HABILITADO** | **50375/35534/= — +376% vs planner; pipeline dia-de-competencia validado en 291 min** |
+| rehearsal_kitchen | 401 | M3 BC (ensayo playbook) | 8M | 20634 | — | no evaluado (seed400 ya robusto) |
 
 *✅ con la sonda de cooperación activa (default del StudentAgent desde 2026-07-11).
 

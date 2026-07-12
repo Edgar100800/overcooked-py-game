@@ -1,0 +1,2 @@
+rehearsal_kitchen | configs/layouts/rehearsal_kitchen.layout | 400 | 8000000 | --partner solo_heavy --anneal-frac 0.8 --bc-data data/bc/rehearsal_kitchen.npz --bc-epochs 8
+rehearsal_kitchen | configs/layouts/rehearsal_kitchen.layout | 401 | 8000000 | --partner solo_heavy --anneal-frac 0.8 --bc-data data/bc/rehearsal_kitchen.npz --bc-epochs 8
