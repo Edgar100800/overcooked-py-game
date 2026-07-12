@@ -1,4 +1,41 @@
-# Avance de entrenamientos PPO — Overcooked
+esto es lo que me mando el profe "**Escenario 1.** layout: `<Se revela el domingo>`, compañero: `greedy_full_task`.
+  * Si no entregan ninguna sopa: 0
+  * Si entregan al menos una sopa: 6
+  * Puestos 15-11: 7
+  * Puestos 10-6: 8
+  * Puestos 5-1: 9
+  Pasan todos los grupos que entreguen al menos una sopa.
+
+  **Escenario 2.** layout: `<Se revela el domingo>`, compañero: `greedy_full_task` con sticky actions.
+  * Si entregan al menos una sopa: 9
+  * Puestos 15-11: 10
+  * Puestos 10-6: 11
+  * Puestos 5-1: 12
+  Pasan todos los grupos que entreguen al menos dos sopas en promedio.
+
+  **Escenario 3.** layout: `<Se revela el domingo>`, compañero: `greedy_full_task` con sticky actions y random actions.
+  * Si entregan al menos dos sopas en promedio: 11
+  * Puestos 12-9: 12
+  * Puestos 8-5: 13
+  * Puestos 4-1: 14
+  Solo los puestos 1-12 clasifican al siguiente escenario.
+
+  **Escenario 4.** layout: `<Se revela el lunes temprano>`, compañero: `random_motion`.
+  * Si entregan al menos una sopa promedio: 12
+  * Puestos 8-12: 14
+  * Puestos 4-8: 15
+  * Puestos 1-4: 16
+  Solo los puestos 1-8 clasifican al siguiente escenario.
+
+  **Escenario 5.** layout: `<Se revela en la competencia>`, compañero: agente de otro grupo.
+  * Puestos 5-6 y al menos dos sopas promedio: 16
+  * Puestos 1-4 y al menos tres sopas promedio: 17
+  Solo los puestos 1-3 clasifican al escenario final.
+
+  **Escenario 6.** layout: `<Se revela en la competencia>`, compañero: agente de otro grupo.
+  * Puesto 3 y al menos una sopa promedio: 18
+  * Puesto 2 y al menos dos sopas promedio: 19
+  * Puesto 1 y al menos dos sopas promedio: 20 + sublime" que se puede intuir de esto y como podemos prepararnos para esto.# Avance de entrenamientos PPO — Overcooked
 
 Estado consolidado de todos los entrenamientos y sus resultados. Actualizado 2026-07-11 (2ª ed.).
 
@@ -84,9 +121,10 @@ del enable-check vs los 3 compañeros.
 | **custom_zigzag** | **300** | **M3 BC+solo_heavy** | 8M | **50412** | **✅ HABILITADO** | **70286/47410/= con sonda → G8 PASS** |
 | custom_room | 300 | M4 self-play | 8M | 46961 | ❌ | pool 13 snaps; flojo vs greedy con sonda |
 | custom_zigzag | 302 | curriculum | 8M | 50273 | ❌ | pierde eps por poco |
-| custom_room | 301 | M3 BC (backlog) | 8M | ⏳ | ⏳ | corriendo (n006) |
+| custom_room | 301 | M3 BC (backlog) | 8M | 46961 | ❌ | pierde vs greedy (30133/60209) y eps |
 | custom_zigzag | 301 | M4 self-play (backlog) | 8M | ⏳ | ⏳ | corriendo (ag001) |
-| custom_dual_pots | 300 | M3 BC (backlog) | 6M | ⏳ | ⏳ | corriendo (n005) |
+| custom_dual_pots | 300 | M3 BC (backlog) | 6M | 60225 | ❌ | **gana greedy (65416/56073)**, pierde eps (48716/77524) |
+| rehearsal_kitchen | 400/401 | M3 BC (ensayo playbook) | 8M | ⏳ | ⏳ | corriendo (n003/n004), ensayo dia-de-competencia |
 
 *✅ con la sonda de cooperación activa (default del StudentAgent desde 2026-07-11).
 
