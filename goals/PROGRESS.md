@@ -161,4 +161,46 @@ Plan del domingo: `bash scripts/prepare_new_layout.sh <escenarioX>.layout` por c
 layout revelado (~5h por layout, corren en paralelo en nodos distintos). Lunes E4:
 `python -m scripts.planner_baseline --layout-file <e4>.layout` (2 min, el planner basta).
 
+## 🗓️ DIA DE COMPETENCIA — layouts E1-E3 revelados y preparados (2026-07-13)
+
+Revelados: E1 `asymmetric_advantages` (greedy), E2 `coordination_ring` (greedy+sticky),
+E3 `counter_circuit` (greedy+sticky+random) — TODOS builtin de overcooked_ai_py.
+Rubrica por puestos (el ranking define la nota; E3 clasifica solo top-12 a E4).
+
+**Hallazgo critico: counter_circuit usa TOMATES.** Todas sus ordenes llevan tomate
+(la mas rapida: onion+tomato, bonus, cuece 22 ticks); el planner solo-cebollas daba
+0 sopas. Fix: **modo receta** en `planner_agent.py` (solo se activa si ninguna orden
+es la mono-sopa clasica; apunta a la orden valida mas rapida, rellena lo que falta a
+cada olla, inicia coccion al completar, y cocina-a-valor-0 las ollas envenenadas por
+el greedy solo-cebollas para liberarlas). counter_circuit: 0 -> **13.5 sopas** vs
+greedy. Regresion en los 6 layouts legacy: numeros IDENTICOS (verificado).
+
+**Infra nueva del dia:**
+- `prepare_new_layout.sh` acepta builtin por nombre (retrocompatible .layout) + flock
+  para playbooks concurrentes. 3 playbooks corrieron en paralelo sin colisiones.
+- `scripts/check_vs_sticky.py`: mide vs greedy+sticky(0.25) puro (companero E2) y
+  sticky+eps(0.15) (E3) parcheando build_builtin_agent en runtime (evaluation/ intacto).
+  Acepta --model-path para candidatos no habilitados.
+- Planner: deteccion de **cocinas disjuntas** (flood-fill + autosuficiencia de ambas
+  regiones; forced_coordination queda excluido) -> en asymmetric ignora al companero
+  solo si hay 2+ ollas listas y el acapara el plato. Numeros medidos identicos (regla
+  de seguro para stickies patologicos).
+- Receta `--partner sticky_heavy` (35% sticky puro + 15% sticky_eps + 25% greedy +
+  20% random + 5% stay) y kind `greedy_sticky` puro en la poblacion.
+- `sbatch/train/run_train_packed.sh`: N entrenamientos en paralelo DENTRO de un job
+  (30 cpus) -> esquiva el bug del epilog y el limite de 5 jobs; 6 entrenamientos
+  concurrentes con la cuota de 64 cpus.
+
+**Baselines del planner (gate_seeds x swap), sopas vs greedy/eps/random:**
+asymmetric 6.5/7.3/5.0 · coordination 8.0/4.8/2.6 · counter_circuit 13.5/12.3/3.4 ·
+counter_circuit_o_1order 6.0/3.5/2.0. Vs sticky/sticky+eps: asymmetric 6.5/6.6 ·
+coordination **3.8/3.7** (unica celda debil) · counter 10.1/9.7.
+
+**Entrenamientos M3 8M (11 modelos, 2 tandas):** NINGUNO supero al planner ->
+ninguno habilitado (fusible OK). Mejores: counter s500/s501 8.1/8.1 sopas vs greedy
+(planner 13.5); asymmetric s510 6.0 (planner 6.5); coordination s521 sticky_heavy
+6.0 vs greedy y 3.3 vs sticky (planner 3.8 — ni el especialista gana su celda);
+cramped s530/s531 no superan 6.5. Conclusion: piso planner muy alto en E1-E3;
+la entrega para E1-E3 es el planner (E3 con modo receta es probablemente top-tier).
+
 <!-- Las entradas de gate se agregan debajo a medida que run_gate.py los ejecuta -->

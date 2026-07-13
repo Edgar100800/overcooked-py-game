@@ -1,0 +1,4 @@
+# Tanda 2 (packed, cuenta tesis -> ds001): anti-sticky E2 + cramped_room (candidato E5/E6)
+coordination_ring | - | 521 | 8000000 | --partner sticky_heavy --anneal-frac 0.8 --bc-data data/bc/coordination_ring.npz --bc-epochs 8
+cramped_room | - | 530 | 8000000 | --partner solo_heavy --anneal-frac 0.8 --bc-data data/bc/cramped_room.npz --bc-epochs 8
+cramped_room | - | 531 | 8000000 | --partner solo_heavy --anneal-frac 0.8 --bc-data data/bc/cramped_room.npz --bc-epochs 8

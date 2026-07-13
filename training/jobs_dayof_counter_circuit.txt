@@ -1,0 +1,2 @@
+counter_circuit | - | 500 | 8000000 | --partner solo_heavy --anneal-frac 0.8 --bc-data data/bc/counter_circuit.npz --bc-epochs 8
+counter_circuit | - | 501 | 8000000 | --partner solo_heavy --anneal-frac 0.8 --bc-data data/bc/counter_circuit.npz --bc-epochs 8

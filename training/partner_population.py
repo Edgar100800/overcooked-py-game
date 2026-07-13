@@ -130,6 +130,10 @@ class PartnerPopulation:
             base = GreedyFullTaskPolicy(seed=seed)
             sticky = StickyPartner(base, stick_prob=0.25, seed=seed)
             return _EpsilonPartner(sticky, eps=0.15, seed=seed)
+        if kind == "greedy_sticky":
+            # sticky PURO (sin epsilon): el companero exacto del escenario 2
+            base = GreedyFullTaskPolicy(seed=seed)
+            return StickyPartner(base, stick_prob=0.25, seed=seed)
         if kind == "self_play":
             model = self.selfplay_models[int(self.rng.integers(0, len(self.selfplay_models)))]
             return SelfPlayPartner(model, deterministic=False)

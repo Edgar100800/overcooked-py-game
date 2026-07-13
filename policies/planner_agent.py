@@ -25,7 +25,7 @@ con `self.mdp` inyectado).
 
 from __future__ import annotations
 
-from collections import deque
+from collections import Counter, deque
 from typing import Iterable
 
 import numpy as np
@@ -89,6 +89,9 @@ class PlannerAgent:
         self._dish_disp: list[tuple[int, int]] = []
         self._onion_disp: list[tuple[int, int]] = []
         self._tomato_disp: list[tuple[int, int]] = []
+        self._orders: list[tuple[str, ...]] = []
+        self._recipe_mode = False
+        self._disjoint_kitchens = False
         self._prev_pos: tuple[int, int] | None = None
         self._pos_history: list[tuple[int, int]] = []
         self._stuck_counter = 0
@@ -107,6 +110,95 @@ class PlannerAgent:
             self._tomato_disp = list(mdp.get_tomato_dispenser_locations())
         except Exception:
             self._tomato_disp = []
+        self._precompute_orders(mdp)
+        self._detect_disjoint_kitchens(mdp)
+
+    def _detect_disjoint_kitchens(self, mdp):
+        """Cocinas disjuntas (p.ej. asymmetric_advantages): cada jugador esta en una
+        region transitable separada con TODAS las estaciones a su alcance. Ahi el
+        companero jamas puede bloquearme ni competir por mis estaciones -> conviene
+        el ciclo completo independiente (se ignoran las puertas de complementariedad
+        en _choose_target). La autosuficiencia de AMBAS regiones es obligatoria:
+        forced_coordination tambien es disjunto pero un jugador no tiene ollas ->
+        alli la complementariedad es lo unico que funciona y el flag queda False."""
+        self._disjoint_kitchens = False
+        try:
+            starts = list(getattr(mdp, "start_player_positions", None) or [])
+            if len(starts) < 2:
+                starts = [p.position for p in mdp.get_standard_start_state().players]
+            if len(starts) < 2 or any(tuple(s) not in self._valid_positions for s in starts[:2]):
+                return
+            region_a = self._flood(tuple(starts[0]))
+            if tuple(starts[1]) in region_a:
+                return  # conectadas -> comportamiento historico
+            region_b = self._flood(tuple(starts[1]))
+            stations = [
+                self._onion_disp + self._tomato_disp,
+                self._dish_disp,
+                self._pot_locations,
+                self._serving,
+            ]
+            for region in (region_a, region_b):
+                for group in stations:
+                    if not any(a in region for s in group for a in self._adjacent(s)):
+                        return  # region no autosuficiente
+            self._disjoint_kitchens = True
+        except Exception:
+            self._disjoint_kitchens = False
+
+    def _flood(self, start: tuple[int, int]) -> set[tuple[int, int]]:
+        """Flood-fill determinista sobre celdas transitables (no consume self.rng)."""
+        seen = {start}
+        queue = deque([start])
+        while queue:
+            pos = queue.popleft()
+            for d in Direction.ALL_DIRECTIONS:
+                nxt = Action.move_in_direction(pos, d)
+                if nxt in self._valid_positions and nxt not in seen:
+                    seen.add(nxt)
+                    queue.append(nxt)
+        return seen
+
+    def _precompute_orders(self, mdp):
+        """Modo receta: si NINGUNA orden del layout es la sopa mono-ingrediente
+        clasica (p.ej. 3 cebollas), rellenar ollas a ciegas entrega sopas invalidas
+        (valor 0). En ese caso el planner apunta a la orden valida mas rapida y
+        rellena cada olla con los ingredientes que le FALTAN para completarla.
+        Si la orden clasica existe (todos los layouts G3/G8), _recipe_mode queda
+        False y el comportamiento es EXACTAMENTE el histórico (no regresiona G8)."""
+        orders: list[tuple[str, ...]] = []
+        try:
+            for r in getattr(mdp, "start_all_orders", None) or []:
+                ing = r["ingredients"] if isinstance(r, dict) else list(r.ingredients)
+                orders.append(tuple(sorted(ing)))
+        except Exception:
+            orders = []
+        mono = tuple([self.ingredient] * Recipe.MAX_NUM_INGREDIENTS)
+        self._recipe_mode = bool(orders) and mono not in orders
+
+        def cook_time(o: tuple[str, ...]) -> int:
+            try:
+                return int(Recipe(o).time)
+            except Exception:
+                return 20 * len(o)
+
+        # menos ingredientes y menor coccion primero: maximiza sopas/episodio
+        self._orders = sorted(set(orders), key=lambda o: (len(o), cook_time(o)))
+
+    def _best_order(self, contents: tuple[str, ...]) -> tuple[str, ...] | None:
+        """La orden valida mas rapida que CONTIENE lo que ya hay en la olla."""
+        c = Counter(contents)
+        for order in self._orders:
+            oc = Counter(order)
+            if all(oc[k] >= v for k, v in c.items()):
+                return order
+        return None
+
+    def _nearest_empty_counter(self, state, mdp, origin):
+        try:
+            return self._nearest(origin, mdp.get_empty_counter_locations(state))
+        except Exception:
+            return None
 
     def _ingredient_dispensers(self) -> list[tuple[int, int]]:
         return self._onion_disp if self.ingredient == "onion" else self._tomato_disp
@@ -146,6 +238,17 @@ class PlannerAgent:
 
         partner = state.players[1 - agent_index] if len(state.players) > 1 else None
         partner_held = partner.held_object.name if (partner and partner.held_object) else None
+
+        if self._disjoint_kitchens and partner_held == "dish" and \
+                len(pot_states.get("ready", [])) > 1:
+            # cocinas disjuntas y MAS de una olla lista: aunque el companero ya
+            # lleve plato solo puede servir una; diferir mi plato dejaria la otra
+            # sopa bloqueando su olla un viaje entero. Cada uno tiene su propio
+            # dispensador de platos, asi que ir por el mio nunca compite.
+            partner_held = None
+
+        if self._recipe_mode:
+            return self._choose_target_recipe(state, mdp, player, partner_held, pot_states)
 
         # --- Con objeto en mano: hay una unica accion correcta por objeto. ---
         if held is not None:
@@ -199,6 +302,97 @@ class PlannerAgent:
             return self._nearest(player.position, full)
         if list(pot_states.get("cooking", [])) and self._dish_disp:
             return self._nearest(player.position, self._dish_disp)
+        return None
+
+    def _choose_target_recipe(self, state, mdp, player, partner_held, pot_states):
+        """FSM para layouts con recetas multi-ingrediente (p.ej. counter_circuit:
+        onion+tomato). Igual que la FSM clasica pero por-olla: calcula que le falta
+        a cada olla para completar la orden valida mas rapida, inicia la coccion en
+        cuanto la receta esta completa, y cocina/entrega (a valor 0) las ollas
+        irreparables que el companero envenenó para liberarlas."""
+        held = player.held_object
+        pos = player.position
+
+        # Clasificar ollas no-cocinando: rellenables (que falta) vs listas-a-iniciar.
+        fillable: dict[tuple[int, int], Counter] = {}
+        startable: list[tuple[int, int]] = []
+        for ppos in self._pot_locations:
+            if not state.has_object(ppos):
+                best = self._best_order(())
+                if best:
+                    fillable[ppos] = Counter(best)
+                continue
+            soup = state.get_object(ppos)
+            if soup.is_ready or soup.is_cooking:
+                continue
+            contents = tuple(sorted(soup.ingredients))
+            best = self._best_order(contents)
+            if best is None:
+                # irreparable (p.ej. 3 cebollas sin orden que las acepte):
+                # cocinarla y entregarla a valor 0 es la unica forma de liberarla.
+                startable.append(ppos)
+                continue
+            missing = Counter(best) - Counter(contents)
+            if missing:
+                fillable[ppos] = missing
+            else:
+                startable.append(ppos)
+
+        ready = list(pot_states.get("ready", []))
+
+        # --- Con objeto en mano ---
+        if held is not None:
+            if held.name == "soup":
+                return self._nearest(pos, self._serving)
+            if held.name == "dish":
+                if ready:
+                    return self._nearest(pos, ready)
+                almost = list(pot_states.get("cooking", [])) + startable
+                return self._nearest(pos, almost) if almost else None
+            if held.name in {"onion", "tomato"}:
+                useful = [p for p, miss in fillable.items() if miss.get(held.name, 0) > 0]
+                if useful:
+                    return self._nearest(pos, useful)
+                # ninguna olla lo necesita: soltarlo en un counter para no bloquearse
+                return self._nearest_empty_counter(state, mdp, pos)
+            return None
+
+        # --- Vacio ---
+        if ready and partner_held != "dish":
+            counter_dishes = self._counter_objects(state, "dish")
+            if counter_dishes:
+                return self._nearest(pos, counter_dishes)
+            if self._dish_disp:
+                return self._nearest(pos, self._dish_disp)
+
+        # Iniciar coccion cuanto antes (corre en paralelo mientras hago otra cosa).
+        if startable:
+            return self._nearest(pos, startable)
+
+        if fillable:
+            # olla mas cerca de completarse; desempate por distancia
+            target_pot = min(
+                fillable,
+                key=lambda p: (
+                    sum(fillable[p].values()),
+                    abs(p[0] - pos[0]) + abs(p[1] - pos[1]),
+                ),
+            )
+            needs = sorted(fillable[target_pot])
+            # complementariedad: si el companero ya trae uno de los faltantes y hay
+            # alternativa, yo voy por el otro ingrediente.
+            if partner_held in needs and len(needs) > 1:
+                needs = [n for n in needs if n != partner_held] + [partner_held]
+            for name in needs:
+                sources = self._counter_objects(state, name)
+                sources += self._onion_disp if name == "onion" else self._tomato_disp
+                if sources:
+                    return self._nearest(pos, sources)
+
+        if ready and self._dish_disp:
+            return self._nearest(pos, self._dish_disp)
+        if list(pot_states.get("cooking", [])) and self._dish_disp:
+            return self._nearest(pos, self._dish_disp)
         return None
 
     def _pots_accepting(self, pot_states) -> list[tuple[int, int]]:

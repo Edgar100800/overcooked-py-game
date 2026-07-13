@@ -1,0 +1,1 @@
+coordination_ring | - | 520 | 8000000 | --partner solo_heavy --anneal-frac 0.8 --bc-data data/bc/coordination_ring.npz --bc-epochs 8

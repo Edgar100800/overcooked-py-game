@@ -7,7 +7,9 @@
 # docs/CLUSTER_NOTES.md) -> enable-check robusto -> reporte con tiempos.
 #
 # Uso:
-#   bash scripts/prepare_new_layout.sh configs/layouts/<nuevo>.layout [SEEDS] [STEPS]
+#   bash scripts/prepare_new_layout.sh <layout> [SEEDS] [STEPS]
+#     <layout>: ruta a un .layout custom (configs/layouts/x.layout) O nombre de un
+#               layout builtin de overcooked_ai_py (ej. asymmetric_advantages)
 #     SEEDS: cuantos seeds entrenar en paralelo (default 2; seeds 400,401,...)
 #     STEPS: timesteps por entrenamiento (default 8000000 ~ 3.3h en CPU)
 # Todo queda en outputs/dayof/<key>/ (baseline.json, enable_seedX.json, report.md).
@@ -18,12 +20,24 @@
 set -eo pipefail
 cd "$(dirname "$0")/.."
 
-LAYOUT_FILE=${1:?uso: prepare_new_layout.sh <layout_file> [seeds] [steps]}
+ARG=${1:?uso: prepare_new_layout.sh <layout_file|builtin> [seeds] [steps]}
 N_SEEDS=${2:-2}
 STEPS=${3:-8000000}
 SEED0=${SEED0:-400}
 
-KEY=$(basename "$LAYOUT_FILE" .layout)
+if [ -f "$ARG" ]; then
+  # modo archivo .layout custom (from_grid)
+  LAYOUT_FILE="$ARG"
+  KEY=$(basename "$LAYOUT_FILE" .layout)
+  LAYOUT_ARGS=(--layout-file "$LAYOUT_FILE")
+  MF_FILE="$LAYOUT_FILE"
+else
+  # modo builtin por nombre (from_layout_name oficial); "-" en el manifest
+  LAYOUT_FILE=""
+  KEY="$ARG"
+  LAYOUT_ARGS=(--layout "$KEY")
+  MF_FILE="-"
+fi
 OUT="outputs/dayof/$KEY"
 mkdir -p "$OUT" logs
 REPORT="$OUT/report.md"
@@ -42,7 +56,7 @@ log "=== $KEY: baseline del planner ==="
 
 # ---------------------------------------------------------------- 1. baseline
 T0=$(date +%s)
-if ! python -m scripts.planner_baseline --layout-file "$LAYOUT_FILE" \
+if ! python -m scripts.planner_baseline "${LAYOUT_ARGS[@]}" \
       --out "$OUT/baseline.json" 2>&1 | tee -a "$OUT/playbook.log"; then
   log "ABORTADO: el planner no produce sopas en $KEY. Arreglar planner/layout antes de entrenar."
   echo -e "\n**ABORTADO en baseline** (planner sin sopas — ver baseline.json)" >> "$REPORT"
@@ -53,7 +67,7 @@ echo -e "\n## Baseline planner ($(mins $T0) min)\n\n\`\`\`json\n$(cat "$OUT/base
 # ---------------------------------------------------------------- 2. datos BC
 log "=== $KEY: dataset BC (planner vs mixtos) ==="
 T0=$(date +%s)
-python -m training.collect_bc_data --layout-file "$LAYOUT_FILE" --episodes 600 \
+python -m training.collect_bc_data "${LAYOUT_ARGS[@]}" --episodes 600 \
     --out "data/bc/$KEY.npz" 2>&1 | tail -3 | tee -a "$OUT/playbook.log"
 echo -e "\n## Dataset BC: data/bc/$KEY.npz ($(mins $T0) min)" >> "$REPORT"
 
@@ -62,7 +76,7 @@ MANIFEST="training/jobs_dayof_$KEY.txt"
 : > "$MANIFEST"
 for i in $(seq 0 $((N_SEEDS - 1))); do
   SEED=$((SEED0 + i))
-  echo "$KEY | $LAYOUT_FILE | $SEED | $STEPS | --partner solo_heavy --anneal-frac 0.8 --bc-data data/bc/$KEY.npz --bc-epochs 8" >> "$MANIFEST"
+  echo "$KEY | $MF_FILE | $SEED | $STEPS | --partner solo_heavy --anneal-frac 0.8 --bc-data data/bc/$KEY.npz --bc-epochs 8" >> "$MANIFEST"
 done
 log "manifest: $MANIFEST ($N_SEEDS seeds desde $SEED0)"
 
@@ -92,6 +106,10 @@ T_TRAIN=$(date +%s)
 JIDS=()
 for i in $(seq 0 $((N_SEEDS - 1))); do
   SEED=$((SEED0 + i))
+  # seccion critica entre playbooks concurrentes: la consulta de nodos/cuentas y el
+  # sbatch deben ser atomicos o dos procesos eligen el mismo slot a la vez
+  exec 9>>"outputs/dayof/.sbatch.lock"
+  flock 9
   if SLOT=$(acct_slot) && NODE=$(free_node); then
     read -r ACC QOS TLIM <<< "$SLOT"
     JID=$(sbatch --parsable --account="$ACC" --qos="$QOS" --time="$TLIM" \
@@ -109,6 +127,8 @@ for i in $(seq 0 $((N_SEEDS - 1))); do
           sbatch/train/run_train_ppo.sh)
     log "seed $SEED -> job ${JID} ENCOLADO tras $OJID en $ONODE (dependency)"
   fi
+  flock -u 9
+  exec 9>&-
   JIDS+=("$JID")
   sleep 2
 done
@@ -138,7 +158,7 @@ for i in $(seq 0 $((N_SEEDS - 1))); do
     echo "- seed $SEED: sin best.zip" >> "$REPORT"
     continue
   fi
-  python -m scripts.enable_model --layout "$KEY" --layout-file "$LAYOUT_FILE" \
+  python -m scripts.enable_model --layout "$KEY" ${LAYOUT_FILE:+--layout-file "$LAYOUT_FILE"} \
       --model "$MODEL" 2>&1 | tee "$OUT/enable_seed$SEED.json" | tail -3
   if grep -q '"robust": true' "$OUT/enable_seed$SEED.json"; then
     ENABLED="seed$SEED"

@@ -126,10 +126,11 @@ def main():
     ap.add_argument("--horizon", type=int, default=200, help="horizon de ENTRENAMIENTO")
     ap.add_argument("--no-subproc", action="store_true")
     ap.add_argument("--partner", default="population",
-                    choices=["population", "greedy", "greedy_heavy", "solo_heavy"],
+                    choices=["population", "greedy", "greedy_heavy", "solo_heavy",
+                             "sticky_heavy"],
                     help="greedy=100% (sobreajusta). greedy_heavy=55% greedy. "
                          "solo_heavy=60% no-cooperativo (stay+random) -> autosuficiente. "
-                         "population=default balanceado.")
+                         "sticky_heavy=50% sticky (esc.2). population=default balanceado.")
     ap.add_argument("--curriculum", action="store_true",
                     help="fase-1 solo (stay/random 50/50) hasta 35%, luego solo_heavy (STEP A-2)")
     ap.add_argument("--bc-data", default=None,
@@ -168,6 +169,12 @@ def main():
                            "random_motion": 0.25, "stay": 0.05}
     elif args.partner == "solo_heavy":
         partner_weights = dict(SOLO_HEAVY)   # 60% no-cooperativo -> fuerza el solo
+    elif args.partner == "sticky_heavy":
+        # Especializado en el companero del escenario 2 (greedy+sticky PURO) sin
+        # perder las celdas del enable-check: greedy 0.25 y random 0.20 conservan
+        # la habilidad vs greedy limpio y el ciclo solo (que el BC ya implanta).
+        partner_weights = {"greedy_sticky": 0.35, "greedy_sticky_eps": 0.15,
+                           "greedy": 0.25, "random_motion": 0.20, "stay": 0.05}
     else:
         partner_weights = None
 

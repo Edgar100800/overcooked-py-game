@@ -1,0 +1,4 @@
+# Tanda 2 (packed, cuenta pregrado -> g002): seguro o_1order + 2do anti-sticky + 3er seed E1
+counter_circuit_o_1order | - | 540 | 8000000 | --partner solo_heavy --anneal-frac 0.8 --bc-data data/bc/counter_circuit_o_1order.npz --bc-epochs 8
+coordination_ring | - | 522 | 8000000 | --partner sticky_heavy --anneal-frac 0.8 --bc-data data/bc/coordination_ring.npz --bc-epochs 8
+asymmetric_advantages | - | 512 | 8000000 | --partner solo_heavy --anneal-frac 0.8 --bc-data data/bc/asymmetric_advantages.npz --bc-epochs 8

@@ -1,0 +1,2 @@
+asymmetric_advantages | - | 510 | 8000000 | --partner solo_heavy --anneal-frac 0.8 --bc-data data/bc/asymmetric_advantages.npz --bc-epochs 8
+asymmetric_advantages | - | 511 | 8000000 | --partner solo_heavy --anneal-frac 0.8 --bc-data data/bc/asymmetric_advantages.npz --bc-epochs 8
