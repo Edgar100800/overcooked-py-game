@@ -1,120 +1,90 @@
-# Overcooked AI Demonstration Collector
+# Overcooked-AI — Agente de competencia (Deep Learning)
 
-Proyecto para recolectar demostraciones humanas en Overcooked-AI. Incluye un menu interactivo para jugar partidas, ver progreso, cambiar niveles/agentes y preparar datasets para Imitation Learning.
+Agente **híbrido** para la competencia Overcooked-AI del curso: un **planner robusto**
+(sin aprendizaje, generaliza a cualquier layout) como piso garantizado, y **especialistas
+PPO por layout** como techo, unidos por un selector con fusibles de seguridad. La entrega
+es `policies/student_agent.py`, compatible con el loader oficial (`src/policy_loader.py`,
+tipo `python_class`).
 
-## Que incluye
+## Arquitectura
 
-- Runner de juego y grabacion de demostraciones.
-- Menu interactivo para usuarios no tecnicos.
-- Seguimiento de progreso por escenario.
-- Politicas automaticas: `stay`, `random_motion`, `greedy_full_task`.
-- Control humano por teclado.
-- Escenarios oficiales y custom en `configs/layouts/`.
+- **Planner** (`policies/planner_agent.py`): FSM + BFS precomputado, < 0.1 ms/acción.
+  Incluye **modo receta** (layouts multi-ingrediente como counter_circuit, que usa
+  tomates), anti-deadlock/oscilación y detección de **cocinas disjuntas**.
+- **Especialistas PPO** (`models/<layout>/best.zip`, SB3 + CNN `SmallGridCNN`): receta
+  M3 = BC warm-start del planner + PPO 8M vs población `solo_heavy`. Solo se despliegan
+  si `models/<layout>/enabled` existe (lo escribe `scripts/enable_model.py` únicamente
+  si el modelo NUNCA empeora al planner — fusible anti-regresión).
+- **Selector** (`policies/student_agent.py`): sonda de cooperación (planner hasta que el
+  compañero demuestre cooperar → PPO), fallback por **terrain-hash** (identifica el layout
+  por el hash del terreno aunque el arnés no lo nombre), watchdog anti-congelamiento y
+  fusible de latencia (60 ms) → siempre degrada al planner.
 
-## Instalacion
+## Resultados (escenarios E1-E3, revelados 2026-07-13)
 
-Recomendado usar entorno virtual:
+Sopas promedio del planner contra el compañero real de cada escenario (gate_seeds × swap):
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements.txt
-```
+| Escenario | Layout | Compañero | Sopas | Umbral |
+|---|---|---|---|---|
+| E1 | asymmetric_advantages | greedy | **6.5** | ≥1 ✅ |
+| E2 | coordination_ring | greedy+sticky | **3.8** (8.0 vs greedy limpio) | ≥2 prom ✅ |
+| E3 | counter_circuit 🍅 | greedy+sticky+random | **9.7** (13.5 vs greedy) | ≥2 prom ✅ |
 
-Si estas en macOS y `python` no existe, usa `python3` para crear el entorno. Dentro del entorno activado, `python` deberia funcionar.
+Gate de entrega **G8: PASS 18/18** (6 layouts × 3 compañeros, con y sin swap; 0 timeouts,
+0 acciones inválidas). 11 modelos PPO entrenados el día de competencia no superaron este
+piso → E1-E3 se juegan con el planner. Detalle completo: `docs/TRAINING_PROGRESS.md`.
 
-## Uso recomendado
-
-Abrir el menu:
-
-```bash
-source .venv/bin/activate
-python -m src.game_menu
-```
-
-Desde el menu puedes:
-
-- Jugar la siguiente grabacion recomendada.
-- Elegir nivel y agente manualmente.
-- Ver progreso detallado.
-- Leer controles e instrucciones.
-
-## Controles
-
-- Movimiento: flechas o `W/A/S/D`
-- Interactuar, tomar, dejar o servir: `Space`, `E` o `Enter`
-- Cancelar partida: `Escape` o `Q`
-
-La ventana muestra el nivel y el paso actual, por ejemplo:
-
-```text
-Overcooked AI | Grabacion 4/36 | Nivel: cramped_room | Paso 120/250
-```
-
-## Comandos utiles
-
-Probar una partida sin grabacion manual:
+## Cómo correr
 
 ```bash
+source scripts/env.sh                      # módulos + venv (clúster)
+# evaluación
+python -m scripts.planner_baseline --layout counter_circuit
+python -m scripts.check_vs_sticky --layout coordination_ring --agent planner
+python -m evaluation.run_gate --gate G8    # gate integral de la entrega
+# entrenamiento (día de competencia: layout nuevo → PPO habilitado, todo automático)
+bash scripts/prepare_new_layout.sh <builtin|archivo.layout> [seeds] [steps]
+# entrenamientos empaquetados (N por job SLURM; ver docs/CLUSTER_NOTES.md §3.5)
+sbatch --export=ALL,JOBS=training/jobs_packed_tesis.txt sbatch/train/run_train_packed.sh
+```
+
+## Documentación
+
+- `PLAN.md` — plan maestro (fases, gates G0-G8, reglas anti-trampa, árboles de decisión).
+- `docs/TRAINING_PROGRESS.md` — estado consolidado de modelos y resultados (tablas).
+- `docs/CLUSTER_NOTES.md` — recetas SLURM del clúster khipu (QOS, bug del epilog, packed).
+- `goals/PROGRESS.md` — bitácora por gate/día.
+
+---
+
+# Recolector de demostraciones humanas (subsistema original)
+
+Menú interactivo para jugar partidas, grabar demostraciones y preparar datasets de
+Imitation Learning.
+
+## Uso
+
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+python -m pip install -r requirements.txt   # RL adicional: requirements-rl.txt
+python -m src.game_menu                     # menú interactivo
+# alternativas directas:
 python -m src.run_game --config configs/play.yaml
-```
-
-Crear una grabacion directa con YAML:
-
-```bash
 python -m src.collect_demonstrations --config configs/collect_demonstrations.yaml
+python -m src.dataset_progress              # ver progreso de grabaciones
 ```
 
-Ver progreso:
+**Controles:** mover = flechas o `W/A/S/D` · interactuar/tomar/dejar/servir = `Space`,
+`E` o `Enter` · cancelar = `Escape` o `Q`.
 
-```bash
-python -m src.dataset_progress
-```
+**Configuración** (`configs/collect_demonstrations.yaml`): `environment.horizon` (duración),
+`environment.layout_name` (oficial) o `layout_file` (custom en `configs/layouts/`),
+`policies.agent_0.name` (agente automático: `stay`, `random_motion`, `greedy_full_task`),
+`policies.agent_1.name: human_keyboard`, `data_collection.output_dir`.
 
-## Configuracion principal
+**Entrega de datos:** `data/`, `outputs/` y `resultados/` están en `.gitignore`. Para
+entregar, carpeta aparte con los `.pkl` de `data/demonstrations/`, `integrantes.txt` y
+los `.layout` custom usados.
 
-Archivo:
-
-```text
-configs/collect_demonstrations.yaml
-```
-
-Puntos importantes:
-
-- `environment.horizon: 250`: duracion de cada partida.
-- `environment.layout_name`: escenario oficial.
-- `environment.layout_file`: escenario custom `.layout`.
-- `policies.agent_0.name`: agente automatico.
-- `policies.agent_1.name: human_keyboard`: agente humano.
-- `data_collection.output_dir: data/demonstrations`: salida de grabaciones.
-
-## Escenarios custom
-
-Los escenarios custom estan en:
-
-```text
-configs/layouts/
-```
-
-Si usas un escenario custom en una entrega, tambien debes adjuntar su archivo `.layout`.
-
-## Entrega de datos
-
-Las grabaciones generadas no se versionan en Git. Estan ignoradas por `.gitignore`:
-
-- `data/`
-- `outputs/`
-- `resultados/`
-- carpetas de entrega
-
-Para entregar, prepara una carpeta aparte con:
-
-- Grabaciones `.pkl` desde `data/demonstrations/`.
-- `integrantes.txt`.
-- Archivos `.layout` si usaste escenarios custom.
-
-## Notas
-
-El warning de Gym sobre mantenimiento puede aparecer al iniciar Overcooked-AI. No bloquea el juego.
-
-Si las teclas no responden bien, usa el menu actualizado y mantén presionada la tecla de movimiento. El control humano tambien captura pulsaciones rapidas para acciones como `Space` o `E`.
+**Notas:** el warning de Gym al iniciar no bloquea nada. Si las teclas no responden,
+mantén presionada la tecla de movimiento (el control captura también pulsaciones rápidas).

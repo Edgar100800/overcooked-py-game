@@ -1,7 +1,7 @@
 # Notas del clúster khipu (SLURM) — trampas y recetas
 
 Apuntes prácticos para correr entrenamientos/gates de este proyecto en khipu sin
-tropezar. Verificado en 2026-07-11.
+tropezar. Verificado en 2026-07-11; patrón packed (§3.5) verificado 2026-07-13.
 
 ---
 
@@ -94,10 +94,33 @@ sbatch --account=pregrado --qos=a-pregrado --time=07:00:00 --partition=gpu --arr
 → 5 trainings, 5 nodos, ~50 cpu. Máximo aprovechamiento seguro.
 
 ### ¿Tiene sentido meter MÁS de 5?
-No: `MaxJobs` (3+2) lo capa a 5, y apilar más en un nodo = se matan (§2). Partir los mismos
-32 cpu en más jobs **no acelera** (CPU-bound: el throughput total está fijo). Lo que SÍ
-ayuda: usar **ambas cuentas** (dobla el cpu real) y **más envs por job** (acelera cada
-training) hasta el tope de cuota.
+Como jobs SEPARADOS no: `MaxJobs` (3+2) lo capa a 5, y apilar más en un nodo = se matan
+(§2). **Pero SÍ como entrenamientos empaquetados (ver §3.5)**: la cuota real es de CPUs
+(32/cuenta = 64 total), no de entrenamientos — 6 entrenamientos de ~10 hilos caben en
+2 jobs de 30 cpus.
+
+## 3.5. Patrón "job empaquetado" (verificado 2026-07-13, jobs 46809/46810 COMPLETED)
+
+**N entrenamientos `train_ppo` en PARALELO dentro de UN solo job** de 30 cpus
+(`sbatch/train/run_train_packed.sh` + manifiesto `training/jobs_packed_*.txt`):
+
+```bash
+sbatch --export=ALL,JOBS=training/jobs_packed_tesis.txt sbatch/train/run_train_packed.sh
+# variante pregrado (wall <=8h) y/o nodo fijo:
+sbatch --account=pregrado --qos=a-pregrado --time=07:00:00 --partition=gpu --nodelist=g002 \
+       --export=ALL,JOBS=training/jobs_packed_pregrado.txt sbatch/train/run_train_packed.sh
+```
+
+Por qué funciona donde los jobs separados no:
+- **Inmune al bug del epilog (§2)**: sigue habiendo UN job mío por nodo; cuando termina,
+  todos sus procesos terminan juntos — no hay job co-ubicado que matar.
+- **Esquiva `MaxJobs`**: 1 slot de los 5 aloja 3 entrenamientos → hasta **6 concurrentes**
+  (2 jobs × 3) con la cuota combinada de 64 cpus, vs 5 con jobs de 10 cpus.
+- **Encadenable**: con `--dependency=afterany:<jobs>` la siguiente tanda arranca sola al
+  liberarse la cuota (así corrió la tanda 2 del día de competencia sin intervención).
+
+Trade-off: si el job muere, mueren los N entrenamientos (mitigado: `callbacks.py` guarda
+`last.zip` en cada eval y cada training escribe su propio log `logs/ppo-pack-<jid>-*.log`).
 
 ---
 

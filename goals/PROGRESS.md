@@ -198,9 +198,12 @@ coordination **3.8/3.7** (unica celda debil) · counter 10.1/9.7.
 
 **Entrenamientos M3 8M (11 modelos, 2 tandas):** NINGUNO supero al planner ->
 ninguno habilitado (fusible OK). Mejores: counter s500/s501 8.1/8.1 sopas vs greedy
-(planner 13.5); asymmetric s510 6.0 (planner 6.5); coordination s521 sticky_heavy
-6.0 vs greedy y 3.3 vs sticky (planner 3.8 — ni el especialista gana su celda);
-cramped s530/s531 no superan 6.5. Conclusion: piso planner muy alto en E1-E3;
-la entrega para E1-E3 es el planner (E3 con modo receta es probablemente top-tier).
+(planner 13.5); asymmetric s510/s512 6.0 (planner 6.5); coordination s521/s522
+sticky_heavy 6.0 vs greedy y s521 3.3 vs sticky (planner 3.8 — ni el especialista
+gana su celda); cramped s530/s531 5.5/6.0 vs greedy (pero SI superan al planner vs
+greedy_eps: 4.8 vs 2.7 — no robustos por la celda greedy); o_1order s540 4.0 vs 6.0.
+Conclusion: piso planner muy alto en E1-E3; la entrega para E1-E3 es el planner
+(E3 con modo receta es probablemente top-tier). **G8 PASS 18/18** con el planner
+nuevo (modo receta + cocinas disjuntas). Commit fd83dc3.
 
 <!-- Las entradas de gate se agregan debajo a medida que run_gate.py los ejecuta -->

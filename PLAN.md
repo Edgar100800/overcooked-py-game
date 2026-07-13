@@ -14,14 +14,18 @@
 - Límite por acción: **100 ms** (`max_action_time_ms: 100`). La inferencia DEBE ser < 50 ms (objetivo < 20 ms).
 - 3 seeds por escenario, se promedia. Algunos escenarios evalúan **cambio de rol** (agente puede ser index 0 o 1).
 
-| Escenario | Layout | Compañero | Ventana de entrenamiento |
+| Escenario | Layout | Compañero | Estado |
 |---|---|---|---|
-| 1 | revelado domingo | `greedy_full_task` | domingo → hay tiempo |
-| 2 | revelado domingo | `greedy_full_task` + sticky actions | domingo → hay tiempo |
-| 3 | revelado domingo | `greedy_full_task` + sticky + random | domingo → hay tiempo |
-| 4 | revelado lunes temprano | `random_motion` (el agente hace TODO solo) | horas, apretado |
-| 5 | revelado EN competencia | agente de otro grupo | **cero** |
-| 6 | revelado EN competencia | agente de otro grupo | **cero** |
+| 1 | ✅ `asymmetric_advantages` | `greedy_full_task` | preparado 07-13 → planner (6.5 sopas) |
+| 2 | ✅ `coordination_ring` | `greedy_full_task` + sticky actions | preparado 07-13 → planner (8.0 / 3.8 vs sticky) |
+| 3 | ✅ `counter_circuit` 🍅 TOMATES | `greedy_full_task` + sticky + random | preparado 07-13 → planner modo receta (**13.5 sopas**) |
+| 4 | revelado lunes temprano | `random_motion` (el agente hace TODO solo) | baseline planner el lunes (2 min) |
+| 5 | revelado EN competencia | agente de otro grupo | planner + fallback terrain-hash |
+| 6 | revelado EN competencia | agente de otro grupo | planner + fallback terrain-hash |
+
+> E1-E3 revelados 2026-07-13 con rúbrica por puestos (el ranking define la nota; E3
+> clasifica solo top-12, E4 top-8). Detalle y baselines en `docs/TRAINING_PROGRESS.md` §0-§2.
+> counter_circuit: ninguna orden es la sopa de 3 cebollas → exigió el modo receta (§4.8).
 
 **Estrategia: agente híbrido.**
 1. **Planner robusto** (sin aprendizaje, generaliza a cualquier layout) = piso garantizado en TODOS los escenarios.
@@ -82,6 +86,15 @@ overcooked-py-game/
 5. **Anti-deadlock:** N pasos sin moverse → ruta alternativa → si no hay, retroceso lateral aleatorio 1-2 pasos → reintentar. Causa #1 de 0 sopas en layouts angostos.
 6. Independiente del índice (`agent_index` viene en el obs dict). Probar SIEMPRE con `swap_agent_positions: true`.
 7. Presupuesto: todo precomputado en reset; `act()` solo lookups. Objetivo < 5 ms.
+8. **Modo receta (2026-07-13):** si NINGUNA orden del layout es la mono-sopa clásica
+   (p.ej. counter_circuit: todas llevan tomate), apuntar a la orden válida más rápida,
+   rellenar cada olla con lo que le FALTA, iniciar cocción al completar la receta, y
+   cocinar-y-entregar a valor 0 las ollas envenenadas por compañeros solo-cebolla para
+   liberarlas. Se desactiva solo en layouts clásicos (regresión cero verificada).
+9. **Cocinas disjuntas (2026-07-13):** flood-fill desde los starts + chequeo de
+   autosuficiencia de AMBAS regiones (forced_coordination queda excluido); si el layout
+   es tipo asymmetric_advantages, ignorar el plato del compañero cuando hay 2+ ollas
+   listas (cada uno tiene su propio dispensador; evita diferir la 2ª sopa).
 
 ---
 
@@ -90,7 +103,7 @@ overcooked-py-game/
 - Dependencias: `gymnasium`, `stable-baselines3>=2.0`, `torch` (CPU). Referencia de arquitectura: PantheonRL (SB3 + Overcooked + diversidad de compañeros), human_aware_rl (deprecado, solo referencia de hiperparámetros/shaping), HAHA (ad hoc teaming).
 - `training/gym_env.py`: `OvercookedEnv` como entorno single-agent; el compañero (política fija/muestreada) se ejecuta dentro de `step()`. `action_space=Discrete(6)`. **Randomizar índice del agente (0/1) en cada `reset()`** → aprende ambos roles.
 - Observación: empezar `featurized` + MlpPolicy (rápido en M4); escalar a `lossless_grid` + CNN solo si se estanca (§12-D).
-- `partner_population.py`, sampleo por `reset()`: greedy limpio 35%, greedy+sticky(p≈0.25)+ε(0.1-0.2) 25%, random_motion 20%, self-play (checkpoints congelados propios) 15%, stay 5%.
+- `partner_population.py`, sampleo por `reset()`: greedy limpio 35%, greedy+sticky(p≈0.25)+ε(0.1-0.2) 25%, random_motion 20%, self-play (checkpoints congelados propios) 15%, stay 5%. Recetas por CLI (`--partner`): population / greedy / greedy_heavy / solo_heavy (M3) / **sticky_heavy** (2026-07-13: sticky PURO 35% — kind `greedy_sticky` — para el compañero exacto de E2).
 - `reward_shaping.py`: `r = sparse + coef·shaped_r_del_agente` (shaped nativos del MDP: pot=3, dish=3, soup_pickup=5), `coef` con annealing 1.0→0.0 en el primer 60% de timesteps.
 - `train_ppo.py`: PPO SB3, `n_envs=8-16` (SubprocVecEnv), `n_steps=400`, `batch=2000`, `lr=3e-4` decay, `ent_coef=0.02→0.001`, `gamma=0.99`, `gae_lambda=0.98`, 5-10M timesteps/layout (la literatura reporta ~8M para converger en cramped_room). CLI: `--layout --timesteps --out`.
 - Callback: cada N steps, 5 episodios con **score oficial** vs greedy_full_task; guardar `best.zip` por score oficial, NO por reward de entrenamiento.
@@ -215,8 +228,8 @@ Aplicar EN ORDEN, un cambio a la vez, 1M steps de prueba por cambio:
 | 2 | G8 modo solo-planner | entrega funcional garantizada para CUALQUIER escenario |
 | 3 | G5-G6 (pipeline PPO, smoke en cramped_room) | gates aprobados |
 | 4 | G7 en los 3 layouts custom (ensayo general) | tabla comparativa |
-| 5 | **Domingo:** layouts 1-3 → 3 entrenamientos en paralelo + G7 por layout | best.zip validado o decisión "planner" |
-| 6 | **Lunes:** layout 4 → entrenamiento corto (2-3h, población dominada por random_motion+stay) + G7 | decisión documentada |
+| 5 | **Domingo:** layouts 1-3 → 3 entrenamientos en paralelo + G7 por layout | ✅ 2026-07-13: 3 playbooks + 2 packed = 11 modelos M3; NINGUNO supera al planner → decisión "planner" en E1-E3 (G8 PASS 18/18) |
+| 6 | **Lunes:** layout 4 → baseline planner (2 min); entrenamiento corto solo si el PPO promete | siguiente paso |
 | 7 | Escenarios 5-6 → planner (o PPO si algún modelo generaliza en prueba rápida) | — |
 
 ## 14. Riesgos
@@ -238,6 +251,11 @@ Aplicar EN ORDEN, un cambio a la vez, 1M steps de prueba por cambio:
 ---
 
 ## 16. Paralelización de entrenamientos con NVIDIA A100 + MIG
+
+> **ESTADO (2026-07-13): esta sección quedó como referencia.** En producción se usó
+> **CPU + jobs empaquetados** (N `train_ppo` dentro de UN job de 30 cpus,
+> `sbatch/train/run_train_packed.sh`) — mismo throughput, sin la fragilidad MPS/epilog
+> que mató el job 46045. Ver `docs/CLUSTER_NOTES.md` §3.5.
 
 **Principio:** el cuello de botella de Overcooked es la simulación en CPU (Python, ~2k steps/s), no la red. La A100 NO se usa para acelerar un solo entrenamiento sino para correr **muchos entrenamientos independientes en paralelo** (layout × seed × config), uno por instancia MIG.
 
